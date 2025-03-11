@@ -1,0 +1,23 @@
+{
+  "identifier": "desktop-capability",
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "windows": [
+    "main",
+    "dialog"
+  ],
+  "permissions": [
+    "global-shortcut:allow-is-registered",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "process:allow-exit",
+    "process:allow-restart",
+    "process:default",
+    "shell:allow-execute",
+    "shell:allow-open",
+    "core:window:allow-set-size"
+  ]
+}
