@@ -14,5 +14,12 @@ declare global {
     $message: MessageApi
     $notification: NotificationApi
   }
+  interface ImportMetaEnv {
+    readonly __BUILD_TIME__: string;
+  }
+  
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
 }
 

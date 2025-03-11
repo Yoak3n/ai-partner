@@ -1,17 +1,14 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-import fs from 'fs'
 
 
 const host = process.env.TAURI_DEV_HOST;
-const versionJson = {
-  "compileTime": new Date().getTime(),
-}
-fs.writeFile('./src/utils/versionJson.json',JSON.stringify(versionJson), (err) => {
-  if (err) throw err;
-});
+
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
+  define: {
+    'import.meta.env.__BUILD_TIME__':  JSON.stringify(new Date().toISOString())
+  },
   plugins: [vue()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -35,4 +32,6 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
-}));
+}
+
+));

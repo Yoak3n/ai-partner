@@ -9,14 +9,14 @@ export interface AppInfo {
 }
 
 import { getVersion, getName, getTauriVersion } from '@tauri-apps/api/app'
-import versionJson from '../../utils/versionJson.json'
 export async function getAppInfo ():Promise<AppInfo> {
+    const compileTime = import.meta.env.__BUILD_TIME__;
     let appInfo: AppInfo = {
         name: await getName(),
         tauriVersion: await getTauriVersion(),
         version: await getVersion(),
         buildNumber: "Unknown",
-        buildDate: new Date(versionJson.compileTime).toLocaleDateString(),
+        buildDate: new Date(compileTime).toLocaleDateString(),
         configPath: "Unknown",
         logo: "Unknown",
     }
