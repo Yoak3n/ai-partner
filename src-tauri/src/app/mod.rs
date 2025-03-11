@@ -62,6 +62,7 @@ pub fn run() {
             {  
                 // interaction::register_shortcuts(app)?;
                 interaction::create_systray(app)?;
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             }
             APP.get_or_init(|| app.handle().clone());
             let app_handle = app.handle().clone();

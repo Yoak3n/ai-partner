@@ -42,6 +42,7 @@
     "active": true,
     "targets": "all",
     "copyright": "GPLv3",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -49,5 +50,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJEMDNBMTgwNTkyRkQwRDAKUldUUTBDOVpnS0VETFdGem4rOXNKUS9WWGFLU1VDNm1UTjNlTGJYRWdjc3BoUzU3aWJLam5tVVIK",
+      "endpoints": [
+        "https://releases.myapp.com/{{target}}/{{arch}}/{{current_version}}",
+        "https://github.com/user/repo/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
