@@ -61,5 +61,6 @@ pub async fn install_update(state: State<'_, AppState>, on_event: Channel<Downlo
         )
         .await?;
     pending_update.install(buf)?;
+    
     Ok(())
 }

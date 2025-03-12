@@ -103,12 +103,15 @@
 <script setup lang="ts">
 import { ref,reactive, onMounted, version } from 'vue';
 import { NTabs, NTabPane,NDivider,NAvatar,NBadge } from 'naive-ui';
-import { invoke } from '@tauri-apps/api/core';
+import type { MessageReactive } from 'naive-ui'
+import { invoke,Channel } from '@tauri-apps/api/core';
 import {open} from '@tauri-apps/plugin-shell'
-import { AppInfo,getAppInfo,VersionComparation } from '../composables/app_information';
+import { AppInfo,getAppInfo,VersionComparation,DownloadEvent } from '../composables/app_information';
 const darkMode = ref(false);
 
 let needUpdate = ref(false);
+let updating = ref(false);
+let messageReactive: MessageReactive | null = null
 let appInfo = reactive<AppInfo>({
   version: '',
   name: '',
@@ -133,16 +136,40 @@ const openLogsFolder= async () => {
   const pwd = await invoke('get_app_install_path')
   open(pwd as string)
 }
+async function install_update(){
+  const onEvent= new Channel<DownloadEvent>();
+  onEvent.onmessage=(message)=>message.event != 'Finished' ? updating.value=true:updating.value=false
+  try {
+        // 调用后端函数，传递回调函数
+        await invoke('install_update', {
+            onEvent
+        });
+    } catch (error) {
+        window.$message.error('安装更新失败:'+error);
+    }
+}
 const getLatesetVersion = async () => {
+  if (!messageReactive){
+    messageReactive = window.$message.loading('正在检查更新...',{duration: 0});
+  }
   const res:VersionComparation= await invoke('fetch_update')
+  messageReactive.destroy()
+  messageReactive = null
   if (res.current_version != res.version){
-    window.$dialog.info({
+    const d = window.$dialog.info({
       title: '发现新版本',
       content: `发现新版本${res.version},是否立即更新?`,
       positiveText: '立即更新',
       negativeText: '取消',
-      onPositiveClick: () => {
-        invoke('install_update')
+      showIcon:false,
+      closable:false,
+      autoFocus:false,
+      actionClass:'update-dialog-action',
+      loading:updating.value,
+      onPositiveClick: async() => {
+        d.loading = true
+        await install_update()
+        d.loading = false
       },
     });
   }
@@ -150,9 +177,11 @@ const getLatesetVersion = async () => {
   return res
 }
 
+
+
 </script>
 
-<style scoped>
+<style lang="less">
 .app-about {
   max-width: 800px;
   margin: 0 auto;
@@ -261,4 +290,20 @@ const getLatesetVersion = async () => {
   --border-color: #4a4a4a;
   --button-bg: #3a3a3a;
 }
+.update-dialog-action{
+  .n-button{
+    &.n-button--default-type{
+      color: #000;
+      --n-border-hover: none !important;
+
+    }
+    &.n-button--info-type{
+      &:hover{
+        color: #fff;
+      }
+
+    }
+  }
+}
+
 </style>

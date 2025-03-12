@@ -1,26 +1,8 @@
 <script setup lang="ts">
 import {  ref } from 'vue';
 import { invoke,Channel } from '@tauri-apps/api/core';
+import { DownloadEvent } from '../composables/app_information';
 
-type DownloadEvent =
-  | {
-      event: 'Started';
-      data: {
-        contentLength: number;
-      };
-    }
-  | {
-      event: 'Progress';
-      data: {
-        chunkLength: number;
-      };
-    }
-  | {
-      event: 'Finished';
-      data: {
-        downloadId: number;
-      };
-    };
 const progress = ref(0);
 const totalSize = ref(0);
 const downloading = ref(false);
