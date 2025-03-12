@@ -1,4 +1,4 @@
-use super::super::updater::{PendingUpdate,UpdateMetadata,Result,DownloadEvent, UpdaterError};
+use super::super::updater::{UpdateMetadata,Result,DownloadEvent, UpdaterError};
 use tauri::{ipc::Channel, State, AppHandle};
 use tauri_plugin_updater::UpdaterExt;
 use super::super::state::AppState;
@@ -14,6 +14,9 @@ pub async fn fetch_update(
 
     let update = app
         .updater_builder()
+        .version_comparator(|c,r|
+           c != r.version
+        )
         //   .endpoints(vec![url])?
         .build()?
         .check()
@@ -32,7 +35,7 @@ pub async fn fetch_update(
   Ok(update_metadata)
 }
 
-#[tauri::command]
+#[tauri::command(async,rename = "download-update")]
 pub async fn install_update(state: State<'_, AppState>, on_event: Channel<DownloadEvent>) -> Result<()> {
     let Some(pending_update) =  state.pending_update.lock().unwrap().0.lock().unwrap().take() else{
         return Err(UpdaterError::NoPendingUpdate);
@@ -43,14 +46,13 @@ pub async fn install_update(state: State<'_, AppState>, on_event: Channel<Downlo
 
     let mut started = false;
 
-    pending_update
-        .download_and_install(
+    let buf = pending_update
+        .download(
             |chunk_length, content_length| {
                 if !started {
                     let _ = on_event.send(DownloadEvent::Started { content_length });
                     started = true;
                 }
-
                 let _ = on_event.send(DownloadEvent::Progress { chunk_length });
             },
             || {
@@ -58,6 +60,6 @@ pub async fn install_update(state: State<'_, AppState>, on_event: Channel<Downlo
             },
         )
         .await?;
-
+    pending_update.install(buf)?;
     Ok(())
 }

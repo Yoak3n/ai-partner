@@ -8,6 +8,11 @@ export interface AppInfo {
     logo: string,
 }
 
+export interface VersionComparation {
+    current_version: string,
+    version: string,
+}
+
 import { getVersion, getName, getTauriVersion } from '@tauri-apps/api/app'
 export async function getAppInfo ():Promise<AppInfo> {
     const compileTime = import.meta.env.__BUILD_TIME__;

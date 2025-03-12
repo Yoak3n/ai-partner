@@ -14,8 +14,7 @@ static CONFIG: Lazy<RwLock<Configuration>> = Lazy::new(|| {
         },
         hotkey: HotKey {
             dialog: "".into(),
-        },
-        proxy: "".into(),
+        }
     };
     RwLock::new(default_config)
 });
@@ -34,8 +33,7 @@ pub struct HotKey{
 #[derive(Deserialize,Serialize,Clone,Debug)]
 pub struct Configuration {
     pub api: API,
-    pub hotkey: HotKey,
-    pub proxy:String,
+    pub hotkey: HotKey
 }
 
 
@@ -47,7 +45,6 @@ pub fn get(key: &str)->Option<String>{
         "api.key" => Some(config_content.api.key.clone()),
         "api.model" => Some(config_content.api.model.clone()),
         "hotkey.dialog" => Some(config_content.hotkey.dialog.clone()),
-        "proxy" => Some(config_content.proxy.clone()),
         _ => None
     }
 }
@@ -59,7 +56,6 @@ pub fn set(key: &str,value: &str)-> Result<(), Box<dyn std::error::Error>> {
             "api.key" => config.api.key = value.to_string(),
             "api.model" => config.api.model = value.to_string(),
             "hotkey.dialog" => config.hotkey.dialog = value.to_string(),
-            "proxy" => config.proxy = value.to_string(),
             _ => {}
         }
     })
@@ -75,8 +71,7 @@ impl Configuration {
             },
             hotkey: HotKey {
                 dialog: "".into(),
-            },
-            proxy: "".into(),
+            }
         }
     }
     // 初始化配置（从文件加载）

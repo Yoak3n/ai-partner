@@ -82,9 +82,11 @@
         </div>
         <!-- 操作按钮组 -->
         <div class="action-buttons">
-          <button class="btn" >
-            <i class="icon-update"></i> 检查更新
-          </button>
+          <n-badge dot :show="needUpdate">
+            <button class="btn"  @click="getLatesetVersion">
+              <i class="icon-update"></i> 检查更新
+            </button>
+          </n-badge>
           <button class="btn" @click="openLogsFolder">
             <i class="icon-folder"></i> 打开所在目录
           </button>
@@ -94,18 +96,19 @@
         </div>
       </n-tab-pane>
     </n-tabs>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref,reactive, onMounted, version } from 'vue';
-import { NTabs, NTabPane,NDivider,NAvatar } from 'naive-ui';
+import { NTabs, NTabPane,NDivider,NAvatar,NBadge } from 'naive-ui';
 import { invoke } from '@tauri-apps/api/core';
 import {open} from '@tauri-apps/plugin-shell'
-
-import { AppInfo,getAppInfo } from '../composables/app_information';
+import { AppInfo,getAppInfo,VersionComparation } from '../composables/app_information';
 const darkMode = ref(false);
 
+let needUpdate = ref(false);
 let appInfo = reactive<AppInfo>({
   version: '',
   name: '',
@@ -119,14 +122,33 @@ let appInfo = reactive<AppInfo>({
 onMounted(async () => {
   const newInfo = await getAppInfo()
   Object.assign(appInfo,newInfo)
+  const res:VersionComparation|null= await invoke('fetch_update')
+  if(res && res.version!=res.current_version){
+    needUpdate.value=true
+  }
+  
 });
-
 
 const openLogsFolder= async () => {
   const pwd = await invoke('get_app_install_path')
   open(pwd as string)
 }
-
+const getLatesetVersion = async () => {
+  const res:VersionComparation= await invoke('fetch_update')
+  if (res.current_version != res.version){
+    window.$dialog.info({
+      title: '发现新版本',
+      content: `发现新版本${res.version},是否立即更新?`,
+      positiveText: '立即更新',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        invoke('install_update')
+      },
+    });
+  }
+  
+  return res
+}
 
 </script>
 

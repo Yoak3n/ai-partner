@@ -3,6 +3,7 @@ use tauri_plugin_updater::{Update, UpdaterExt};
 use crate::store::setting::get;
 use tauri_plugin_notification::NotificationExt;
 
+#[allow(dead_code)]
 pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     let proxy_url = if let Some(proxy) = get("proxy"){
         if proxy.is_empty(){
@@ -48,6 +49,7 @@ pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     }
     Ok(())
 }
+#[allow(dead_code)]
 async fn update_process(app:&AppHandle,proxy:Option<Url>)->Option<Update>{
     match proxy{
         Some(proxy_url) => {
@@ -101,6 +103,7 @@ pub enum DownloadEvent {
     Progress {
         chunk_length: usize,
     },
+    #[serde(rename_all = "camelCase")]
     Finished,
 }
 

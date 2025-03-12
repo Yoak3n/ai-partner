@@ -73,18 +73,19 @@ pub fn run() {
                 // interaction::register_shortcuts(app)?;
                 interaction::create_systray(app)?;
                 app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
-                tauri::async_runtime::spawn(async move {
-                    updater::update(app_handle).await.unwrap();
-                  });
+                // tauri::async_runtime::spawn(async move {
+                //     updater::update(app_handle).await.unwrap();
+                //   });
                 APP.get_or_init(|| app.handle().clone());
                   
                 match register_shortcut("all") {
                     Ok(()) => println!("Successfully registered shortcuts"),
                     Err(e) => {
                         println!("Failed to register shortcuts: {}", e);
-                        app.handle().notification().builder()
+                        app
+                            .handle()
+                            .notification().builder()
                             .title("Failed to register global shortcut")
-                            .body(&e)
                             .icon("ai-partner")
                             .show()
                             .unwrap_or_else(|e| println!("Failed to show notification: {}", e));
