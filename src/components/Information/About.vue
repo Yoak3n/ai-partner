@@ -36,7 +36,7 @@
           <div class="info-grid">
             <div class="info-item">
               <label>项目地址：</label>
-              <span><a href="https://github.com/Yoak3n/rust_homework/tree/main/ai-partner" target="_blank" rel="noopener noreferrer">ai-partner</a></span>
+              <span><a href="https://github.com/Yoak3n/ai-partner" target="_blank" rel="noopener noreferrer">ai-partner</a></span>
             </div>
             <div class="info-item">
               <label>编译日期：</label>
@@ -112,15 +112,7 @@ const darkMode = ref(false);
 let needUpdate = ref(false);
 let updating = ref(false);
 let messageReactive: MessageReactive | null = null
-let appInfo = reactive<AppInfo>({
-  version: '',
-  name: '',
-  buildDate: '',
-  buildNumber: '',
-  configPath:'',
-  logo:'',
-  tauriVersion:'',
-});
+let appInfo = reactive<AppInfo>({version: '',name: '',buildDate: '',buildNumber: '',configPath:'',logo:'',tauriVersion:'',});
 
 onMounted(async () => {
   const newInfo = await getAppInfo()
