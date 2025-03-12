@@ -149,7 +149,7 @@ const saveSetting = async()=>{
 onMounted(()=>saveSetting)
 </script>
 
-<style scoped lang="less">
+<style lang="less">
 .setting-wrapper {
     width: 100%;
     display: flex;
@@ -164,9 +164,10 @@ onMounted(()=>saveSetting)
         font-weight: 500;
         border-radius: 20px;
         transition: all 0.3s ease;
-        
+
         &:hover {
             transform: translateY(-2px);
+            color: #fff !important;
             box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
         }
         

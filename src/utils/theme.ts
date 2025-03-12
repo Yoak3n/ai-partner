@@ -145,6 +145,7 @@ export const modalThemeOverrides: GlobalThemeOverrides = {
     textColorHoverPrimary: '#ffffff',  // 改为纯白色
     textColorPressedPrimary: '#ffffff',
     textColorFocusPrimary: '#ffffff',
+    colorHover:'#ffffff',
     borderRadius: '20px',
     heightMedium: '40px',
     fontSizeMedium: '15px',

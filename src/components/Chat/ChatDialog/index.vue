@@ -19,7 +19,7 @@ const handleScroll = () => {
   if (!messageContainer.value) return;
   
   // 检测是否滚动到底部
-  const isAtBottom = messageContainer.value.scrollHeight - messageContainer.value.scrollTop <= messageContainer.value.clientHeight + 50;
+  const isAtBottom = messageContainer.value.scrollHeight - messageContainer.value.scrollTop <= messageContainer.value.clientHeight + 150;
   
   // 如果不在底部，设置用户正在滚动状态
   if (!isAtBottom) {
@@ -305,7 +305,6 @@ message-container::-webkit-scrollbar-track {
     height: 50px;
     border-radius: 5px 10px 10px 5px;
     background: #4d6bfe;
-    /* 主色不透明版本 */
     color: white;
     font-weight: 500;
     font-size: 18px;
@@ -333,7 +332,7 @@ message-container::-webkit-scrollbar-track {
   width: 100%;
   height: 100%;
   border: none;
-  padding: 10px;
+  padding: 12px;
   box-sizing: border-box;
   resize: none;
   font-size: large;
