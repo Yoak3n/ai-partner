@@ -3,12 +3,15 @@ mod state;
 mod interaction;
 mod hotkey;
 mod window;
+mod updater;
 
 use tauri::AppHandle;
+use updater::PendingUpdate;
 use std::sync::{Mutex,Arc};
 use once_cell::sync::OnceCell;
 use tauri_plugin_window_state;
 use tauri_plugin_notification::NotificationExt;
+
 use super::store::{setting::Configuration,db::Database};
 use state::AppState;
 use hotkey::register_shortcut;
@@ -23,6 +26,7 @@ pub fn run() {
     let app_state = AppState{
         config:Arc::new(Mutex::new(config)),
         db: Arc::new(db),
+        pending_update: Arc::new(Mutex::new(PendingUpdate::new())),
     };
     let instance = tauri::Builder::default()
         .manage(app_state)
@@ -52,32 +56,42 @@ pub fn run() {
             invoke::chat::get_conversations,
             invoke::chat::save_message,
             invoke::chat::get_conversation_messages,
-            invoke::chat::delete_conversation
+            invoke::chat::delete_conversation,
+            #[cfg(desktop)]
+            invoke::update::fetch_update,
+            #[cfg(desktop)]
+            invoke::update::install_update,
             ]
         );
        
         instance
         .setup(|app| {
+
             #[cfg(desktop)]
             {  
+                let app_handle = app.handle().clone();
                 // interaction::register_shortcuts(app)?;
                 interaction::create_systray(app)?;
-                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
-            }
-            APP.get_or_init(|| app.handle().clone());
-            let app_handle = app.handle().clone();
-            match register_shortcut("all") {
-                Ok(()) => println!("Successfully registered shortcuts"),
-                Err(e) => {
-                    println!("Failed to register shortcuts: {}", e);
-                    app_handle.notification().builder()
-                        .title("Failed to register global shortcut")
-                        .body(&e)
-                        .icon("ai-partner")
-                        .show()
-                        .unwrap_or_else(|e| println!("Failed to show notification: {}", e));
+                app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
+                tauri::async_runtime::spawn(async move {
+                    updater::update(app_handle).await.unwrap();
+                  });
+                APP.get_or_init(|| app.handle().clone());
+                  
+                match register_shortcut("all") {
+                    Ok(()) => println!("Successfully registered shortcuts"),
+                    Err(e) => {
+                        println!("Failed to register shortcuts: {}", e);
+                        app.handle().notification().builder()
+                            .title("Failed to register global shortcut")
+                            .body(&e)
+                            .icon("ai-partner")
+                            .show()
+                            .unwrap_or_else(|e| println!("Failed to show notification: {}", e));
+                    }
                 }
             }
+
             
 
             
