@@ -2,20 +2,20 @@
   <div class="app-about" :class="{ 'dark-mode': darkMode }">
     <n-tabs type="segment">
       <n-tab-pane name="chap1" tab="使用说明">
-        <div >
+        <div>
           安装后开始对话前需要先
           <b>配置api相关信息:</b>
-          <br/>
+          <br />
           在设置中找到api配置，填入api地址、api密钥以及调用的模型名即可开始对话。
         </div>
         <n-divider></n-divider>
         <div>
-          快速（临时）对话框: 
-          <br/>
+          快速（临时）对话框:
+          <br />
           回车键发送消息，循环按钮可停止并清空当前对话
-          <br/>
+          <br />
           对话框顶可拖动
-          <br/>
+          <br />
 
         </div>
       </n-tab-pane>
@@ -36,7 +36,8 @@
           <div class="info-grid">
             <div class="info-item">
               <label>项目地址：</label>
-              <span><a href="https://github.com/Yoak3n/ai-partner" target="_blank" rel="noopener noreferrer">ai-partner</a></span>
+              <span><a href="https://github.com/Yoak3n/ai-partner" target="_blank"
+                  rel="noopener noreferrer">ai-partner</a></span>
             </div>
             <div class="info-item">
               <label>编译日期：</label>
@@ -46,13 +47,13 @@
               <label>开发框架：</label>
               <span>
                 <a href="https://tauri.app/" target="_blank" rel="noopener noreferrer">
-                  <img src="../../assets/tauri.svg" alt="" height="15" >
+                  <img src="../../assets/tauri.svg" alt="" height="15">
                   tauri {{ appInfo.tauriVersion }}
                 </a>
                 /
                 <a href="https://vuejs.org/" target="_blank" rel="noopener noreferrer">
-                  <img src="../../assets/vue.svg" alt=""  height="15">
-                  Vue {{version}}
+                  <img src="../../assets/vue.svg" alt="" height="15">
+                  Vue {{ version }}
                 </a>
               </span>
             </div>
@@ -63,7 +64,7 @@
           <div class="info-grid">
 
             <div class="info-item">
-              <label>                
+              <label>
                 <n-avatar src="https://avatars.githubusercontent.com/u/120039624?v=4">
                 </n-avatar>
               </label>
@@ -83,14 +84,14 @@
         <!-- 操作按钮组 -->
         <div class="action-buttons">
           <n-badge dot :show="needUpdate">
-            <button class="btn"  @click="getLatesetVersion">
+            <button class="btn" @click="getLatesetVersion">
               <i class="icon-update"></i> 检查更新
             </button>
           </n-badge>
           <button class="btn" @click="openLogsFolder">
             <i class="icon-folder"></i> 打开所在目录
           </button>
-          <button class="btn" >
+          <button class="btn">
             <i class="icon-copy"></i> 复制诊断信息
           </button>
         </div>
@@ -101,74 +102,75 @@
 </template>
 
 <script setup lang="ts">
-import { ref,reactive, onMounted, version } from 'vue';
-import { NTabs, NTabPane,NDivider,NAvatar,NBadge } from 'naive-ui';
+import { ref, reactive, onMounted, version, onBeforeUnmount } from 'vue';
+import { NTabs, NTabPane, NDivider, NAvatar, NBadge } from 'naive-ui';
 import type { MessageReactive } from 'naive-ui'
-import { invoke,Channel } from '@tauri-apps/api/core';
-import {open} from '@tauri-apps/plugin-shell'
-import { AppInfo,getAppInfo,VersionComparation,DownloadEvent } from '../composables/app_information';
+import { invoke, Channel } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-shell'
+import { AppInfo, getAppInfo, VersionComparation, DownloadEvent } from '../composables/app_information';
 const darkMode = ref(false);
 
 let needUpdate = ref(false);
 let updating = ref(false);
 let messageReactive: MessageReactive | null = null
-let appInfo = reactive<AppInfo>({version: '',name: '',buildDate: '',buildNumber: '',configPath:'',logo:'',tauriVersion:'',});
+let appInfo = reactive<AppInfo>({ version: '', name: '', buildDate: '', buildNumber: '', configPath: '', logo: '', tauriVersion: '', });
 
 onMounted(async () => {
   const newInfo = await getAppInfo()
-  Object.assign(appInfo,newInfo)
-  const res:VersionComparation|null= await invoke('fetch_update')
-  if(res && res.version!=res.current_version){
-    needUpdate.value=true
+  Object.assign(appInfo, newInfo)
+  const res: VersionComparation | null = await invoke('fetch_update')
+  if (res && res.version != res.current_version) {
+    needUpdate.value = true
   }
-  
 });
+onBeforeUnmount(() => removeMessage());
 
-const openLogsFolder= async () => {
+const openLogsFolder = async () => {
   const pwd = await invoke('get_app_install_path')
   open(pwd as string)
 }
-async function install_update(){
-  const onEvent= new Channel<DownloadEvent>();
-  onEvent.onmessage=(message)=>message.event != 'Finished' ? updating.value=true:updating.value=false
+async function install_update() {
+  const onEvent = new Channel<DownloadEvent>();
+  onEvent.onmessage = (message) => message.event != 'Finished' ? updating.value = true : updating.value = false
   try {
-        // 调用后端函数，传递回调函数
-        await invoke('install_update', {
-            onEvent
-        });
-    } catch (error) {
-        window.$message.error('安装更新失败:'+error);
-    }
+    await invoke('install_update', { onEvent });
+  } catch (error) {
+    window.$message.error('安装更新失败:' + error);
+  }
 }
 const getLatesetVersion = async () => {
-  if (!messageReactive){
-    messageReactive = window.$message.loading('正在检查更新...',{duration: 0});
+  if (!messageReactive) {
+    messageReactive = window.$message.loading('正在检查更新...', { duration: 0 });
   }
-  const res:VersionComparation= await invoke('fetch_update')
-  messageReactive.destroy()
-  messageReactive = null
-  if (res.current_version != res.version){
+  const res: VersionComparation = await invoke('fetch_update')
+  removeMessage()
+  if (res.current_version != res.version) {
     const d = window.$dialog.info({
       title: '发现新版本',
       content: `发现新版本${res.version},是否立即更新?`,
       positiveText: '立即更新',
       negativeText: '取消',
-      showIcon:false,
-      closable:false,
-      autoFocus:false,
-      actionClass:'update-dialog-action',
-      loading:updating.value,
-      onPositiveClick: async() => {
+      showIcon: false,
+      closable: false,
+      autoFocus: false,
+      actionClass: 'update-dialog-action',
+      loading: updating.value,
+      onPositiveClick: async () => {
         d.loading = true
         await install_update()
         d.loading = false
       },
     });
   }
-  
   return res
 }
 
+const removeMessage = () => {
+  if (messageReactive) {
+    messageReactive.destroy();
+    messageReactive = null;
+  }
+};
 
 
 </script>
@@ -282,20 +284,21 @@ const getLatesetVersion = async () => {
   --border-color: #4a4a4a;
   --button-bg: #3a3a3a;
 }
-.update-dialog-action{
-  .n-button{
-    &.n-button--default-type{
+
+.update-dialog-action {
+  .n-button {
+    &.n-button--default-type {
       color: #000;
       --n-border-hover: none !important;
 
     }
-    &.n-button--info-type{
-      &:hover{
+
+    &.n-button--info-type {
+      &:hover {
         color: #fff;
       }
 
     }
   }
 }
-
 </style>
