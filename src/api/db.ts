@@ -4,7 +4,6 @@ import { AppSetting } from "../types";
 export async function querySetting() {
     let setting: AppSetting = await invoke("get_config")
     console.log("get config: ", setting);
-    
     return setting
 }
 

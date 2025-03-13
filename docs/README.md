@@ -4,12 +4,12 @@
 
 ## 功能特性
 
-✅ 消息历史管理  
-✅ 流式响应交互  
-✅ 对话上下文重试  
-✅ 自适应布局界面  
-✅ 文本生成暂停控制  
-✅ 全局唤出快捷对话
+- [x] 消息历史管理  
+- [x] 流式响应交互  
+- [ ] 对话上下文重试(待改进)  
+- [x] 自适应布局界面  
+- [x] 文本生成暂停控制  
+- [x] 全局唤出快捷对话
 ### 主界面
 
 ![主界面](https://github.com/Yoak3n/ai-partner/blob/main/docs/main.png?raw=true)
@@ -24,7 +24,7 @@
 - UI组件库：Naive UI
 - 状态管理：Pinia
 - 后端框架：Rust + Tauri2
-- AI集成：OpenAI API
+- AI对话集成：OpenAI API
 
 ## 安装使用
 ### 发行版
@@ -55,4 +55,4 @@ pnpm run tauri build
 - 应用开发框架[tauri](https://tauri.app/)
 - 前端开发框架[vue](https://v3.cn.vuejs.org/)
 - UI组件[naive-ui](https://www.naiveui.com/zh-CN/os-theme)
-- 快捷键注册实现参考[pot-desktop](https://github.com/pot-app/pot-desktop)
+- 功能实现参考[pot-desktop](https://github.com/pot-app/pot-desktop)

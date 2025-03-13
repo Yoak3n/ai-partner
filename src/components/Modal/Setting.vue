@@ -9,7 +9,11 @@
             label-align="left">
             <n-divider >API</n-divider>
             <n-form-item label="API_base">
-                <n-input placeholder="请输入API请求地址" v-model:value="model!.api.url" />
+                <n-input-group>
+                    <n-input placeholder="请输入API请求地址" v-model:value="model!.api.url" />
+                    <n-input-group-label>/chat/completions</n-input-group-label>
+                </n-input-group>
+  
             </n-form-item>
             <n-form-item label="API_key">
                 <n-input placeholder="请输入API请求key" type="password" show-password-on="click" v-model:value="model!.api.key" :input-props="{autocomplete:'off'}" >
@@ -80,7 +84,7 @@
 
 <script lang="ts" setup>
 import { ref,onMounted, computed } from 'vue';
-import { NForm, NFormItem, NInput, NButton, NIcon,NDivider,NSelect } from 'naive-ui';
+import { NForm, NFormItem, NInput,NInputGroup,NInputGroupLabel, NButton, NIcon,NDivider,NSelect } from 'naive-ui';
 import type { AppSetting } from '../../types';
 import { storeToRefs } from 'pinia'
 import { useApiStore } from '../../store';
@@ -112,9 +116,7 @@ let model = ref<AppSetting|null>({
 );
 onMounted(async()=>{
     const s = await querySetting();
-    if(s){
-        model.value = s;
-    }
+    if(s){model.value = s;}
     $ApiStore.initModelHistory();
 })
 const props = defineProps({
@@ -156,6 +158,9 @@ onMounted(()=>saveSetting)
     justify-content: center;
     align-items: start;
     margin: 5rem 0 0 0;
+    .n-input-group-label{
+        height: 40px;
+    }
     .confirm-btn {
         margin: 0 auto;
         width: 120px;

@@ -46,7 +46,9 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             invoke::operation::create_dialog,
+            #[cfg(desktop)]
             invoke::operation::get_app_install_path,
+            #[cfg(desktop)]
             invoke::operation::register_shortcut_by_frontend,
             invoke::operation::set_config,
             invoke::operation::get_config,
