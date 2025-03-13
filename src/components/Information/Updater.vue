@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {  ref } from 'vue';
 import { invoke,Channel } from '@tauri-apps/api/core';
-import { DownloadEvent } from '../composables/app_information';
+import type { DownloadEvent } from '../composables';
 
 const progress = ref(0);
 const totalSize = ref(0);
@@ -13,13 +13,10 @@ async function installUpdate() {
 
     const onEvent= new Channel<DownloadEvent>();
     onEvent.onmessage=(message)=>{
-        console.log(message);
-        
         if(message.event==='Started'){
             downloading.value=true;
             totalSize.value=message.data.contentLength;
             console.log("started,total",totalSize.value);
-            
         }else if(message.event==='Progress'){
             downloading.value=true;
             progress.value+=message.data.chunkLength;

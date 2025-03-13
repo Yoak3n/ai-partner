@@ -8,30 +8,6 @@ export interface AppInfo {
     logo: string,
 }
 
-export interface VersionComparation {
-    current_version: string,
-    version: string,
-}
-
-export type DownloadEvent =
-  | {
-      event: 'Started';
-      data: {
-        contentLength: number;
-      };
-    }
-  | {
-      event: 'Progress';
-      data: {
-        chunkLength: number;
-      };
-    }
-  | {
-      event: 'Finished';
-      data: {
-        downloadId: number;
-      };
-    };
 
 import { getVersion, getName, getTauriVersion } from '@tauri-apps/api/app'
 export async function getAppInfo ():Promise<AppInfo> {

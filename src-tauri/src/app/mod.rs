@@ -79,12 +79,12 @@ pub fn run() {
                 APP.get_or_init(|| app.handle().clone());
                   
                 match register_shortcut("all") {
-                    Ok(()) => println!("Successfully registered shortcuts"),
-                    Err(e) => {
-                        println!("Failed to register shortcuts: {}", e);
+                    Ok(()) => {},
+                    Err(_) => {
                         app
                             .handle()
-                            .notification().builder()
+                            .notification()
+                            .builder()
                             .title("Failed to register global shortcut")
                             .icon("ai-partner")
                             .show()
@@ -92,10 +92,6 @@ pub fn run() {
                     }
                 }
             }
-
-            
-
-            
             Ok(())
         })
         .run(tauri::generate_context!())

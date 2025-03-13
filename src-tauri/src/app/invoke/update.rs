@@ -1,5 +1,6 @@
 use super::super::updater::{UpdateMetadata,Result,DownloadEvent, UpdaterError};
-use tauri::{ipc::Channel, State, AppHandle};
+use tauri::{ipc::Channel, AppHandle, Manager, State};
+use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
 use super::super::state::AppState;
 #[tauri::command]
@@ -21,15 +22,16 @@ pub async fn fetch_update(
         .build()?
         .check()
         .await?;
-
+    if let Some(_) = update {
+        app.app_handle().notification().builder().title("found pending update").icon("ai-partner").show().unwrap_or_else(|e| println!("Failed to show notification: {}", e));
+    }else{
+        return Err(UpdaterError::NoPendingUpdate);
+    }
     let update_metadata = update.as_ref().map(|update| UpdateMetadata {
         version: update.version.clone(),
         current_version: update.current_version.clone(),
     });
     let pending_update = state.pending_update.lock().unwrap();
-    // let Some(mut pending_update) =  state.pending_update.lock().unwrap().0.lock().unwrap().take() else{
-    //     return Err(UpdaterError::NoPendingUpdate);
-    // };
     *pending_update.0.lock().unwrap() = update;
 
   Ok(update_metadata)

@@ -2,9 +2,7 @@ use tauri::{AppHandle, Runtime};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt,ShortcutState};
 
 use crate::store::setting::{get,set};
-
 use super::{APP,window::switch_dialog_window};
-
 
 pub fn register<F,R:Runtime>(app_handle: &AppHandle<R>, name: &str, handler: F, key: &str) -> Result<(), String>
 where

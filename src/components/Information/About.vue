@@ -107,19 +107,18 @@ import { NTabs, NTabPane, NDivider, NAvatar, NBadge } from 'naive-ui';
 import type { MessageReactive } from 'naive-ui'
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell'
-import { AppInfo, getAppInfo, VersionComparation, DownloadEvent } from '../composables/app_information';
-const darkMode = ref(false);
+import { AppInfo, getAppInfo, VersionComparation, DownloadEvent } from '../composables';
 
+const darkMode = ref(false);
 let needUpdate = ref(false);
-let updating = ref(false);
 let messageReactive: MessageReactive | null = null
 let appInfo = reactive<AppInfo>({ version: '', name: '', buildDate: '', buildNumber: '', configPath: '', logo: '', tauriVersion: '', });
 
 onMounted(async () => {
   const newInfo = await getAppInfo()
   Object.assign(appInfo, newInfo)
-  const res: VersionComparation | null = await invoke('fetch_update')
-  if (res && res.version != res.current_version) {
+  const res = await fetchUpdate()
+  if (res != null && res.version != res.current_version) {
     needUpdate.value = true
   }
 });
@@ -131,20 +130,26 @@ const openLogsFolder = async () => {
 }
 async function install_update() {
   const onEvent = new Channel<DownloadEvent>();
-  onEvent.onmessage = (message) => message.event != 'Finished' ? updating.value = true : updating.value = false
+  onEvent.onmessage = () => { }
   try {
     await invoke('install_update', { onEvent });
   } catch (error) {
     window.$message.error('安装更新失败:' + error);
   }
 }
+const fetchUpdate = async ():Promise<VersionComparation|null> => {
+  try {
+    const res: VersionComparation = await invoke('fetch_update')
+    return res
+  } catch (e) {return null}
+
+}
 const getLatesetVersion = async () => {
-  if (!messageReactive) {
-    messageReactive = window.$message.loading('正在检查更新...', { duration: 0 });
-  }
-  const res: VersionComparation = await invoke('fetch_update')
+  if (!messageReactive) { messageReactive = window.$message.loading('正在检查更新...', { duration: 0 });}
+  const res = await fetchUpdate()
   removeMessage()
-  if (res.current_version != res.version) {
+  if (res != null && res.current_version != res.version) {
+    needUpdate.value = true
     const d = window.$dialog.info({
       title: '发现新版本',
       content: `发现新版本${res.version},是否立即更新?`,
@@ -154,15 +159,15 @@ const getLatesetVersion = async () => {
       closable: false,
       autoFocus: false,
       actionClass: 'update-dialog-action',
-      loading: updating.value,
       onPositiveClick: async () => {
         d.loading = true
         await install_update()
         d.loading = false
       },
     });
+  }else{
+    window.$message.info('当前已是最新版本')
   }
-  return res
 }
 
 const removeMessage = () => {

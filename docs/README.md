@@ -28,7 +28,7 @@
 
 ## 安装使用
 ### 发行版
-目前仅提供Windows x64版本的发行版，可在[Release](https://github.com/Yoak3n/ai-partner/releases)页面下载，如需要其他版本可尝试自行编译构建
+可在[Release](https://github.com/Yoak3n/ai-partner/releases)页面下载，如需要其他版本可尝试自行编译构建，但windows之外的版本无法保证使用体验
 
 ### 环境要求
 - Rust 1.70+
