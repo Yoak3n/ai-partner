@@ -32,6 +32,7 @@ const loadConversation = async (id: number) => {
     if (Array.isArray(msgs)) {
       messages.value.splice(0, messages.value.length, ...(msgs as MessageItem[] ))
       nextTick(()=>addCopyButtons())
+      console.log('messages',messages.value);
       conversationId.value = id
       throttleEmitScrollToBottom()
     } else {

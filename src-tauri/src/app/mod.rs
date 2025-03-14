@@ -59,6 +59,9 @@ pub fn run() {
             invoke::chat::save_message,
             invoke::chat::get_conversation_messages,
             invoke::chat::delete_conversation,
+            invoke::chat::add_new_favorite,
+            invoke::chat::remove_favorite,
+            invoke::chat::get_favorites,
             #[cfg(desktop)]
             invoke::update::fetch_update,
             #[cfg(desktop)]

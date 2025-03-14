@@ -8,6 +8,7 @@ pub struct MessageItem{
     pub content: String,
     pub reasoning_content: String,
     pub timestamp: usize,
+    pub favorited: Option<usize>
 }
 impl Default for MessageItem {
     fn default() -> Self {
@@ -16,18 +17,12 @@ impl Default for MessageItem {
             content: "".to_string(),
             reasoning_content: "".to_string(),
             timestamp: 0,
+            favorited: None
         }
     }
 }
 
 impl MessageItem {
-    // pub fn new(role: String, content: String, reasoning_content: Option<String>) -> Self {
-    //     Self {
-    //         role,
-    //         content,
-    //         reasoning_content,
-    //     }
-    // }
     pub fn append(&mut self, content:&MessageType) {
         match content {
             MessageType::Content(c) => {

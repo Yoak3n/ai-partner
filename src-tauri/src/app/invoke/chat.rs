@@ -163,3 +163,30 @@ pub async fn delete_conversation(
     state.db.delete_conversation(conversation_id)
         .map_err(|e| e.to_string())
 }
+
+
+#[tauri::command]
+pub async fn add_new_favorite(
+    state: State<'_, AppState>,
+    message_id: i64
+)-> Result<i64, String>{
+    state.db.favorite_message(message_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn remove_favorite(
+    state: State<'_, AppState>,
+    message_id: i64
+)-> Result<(), String>{
+    state.db.unfavorite_message(message_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_favorites(
+    state: State<'_, AppState>
+)-> Result<Vec<MessageItem>, String>{
+    state.db.get_favorited_messages()
+        .map_err(|e| e.to_string())
+}

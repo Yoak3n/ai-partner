@@ -3,6 +3,7 @@ export interface MessageItem {
     content?: string;
     reasoning_content?:string;
     timestamp?: number;
+    favorited?: boolean;
 }
 
 export interface ErrorMessage {

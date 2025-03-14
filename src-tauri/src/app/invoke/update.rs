@@ -16,8 +16,8 @@ pub async fn fetch_update(
     let update = app
         .updater_builder()
         .timeout(std::time::Duration::from_secs(30))
-        .version_comparator(|c, r|c != r.version)
         // 目前这样挺好的。默认使用的版本号比较器与当前的版本号命名规则不适配，patch字段单独比较大小会导致版本号比较错误，如0.1.7 低于 0.1.61导致不能更新到0.1.7
+        .version_comparator(|c, r|c != r.version)
         //   .endpoints(vec![url])?
         .build()?
         .check()
@@ -37,14 +37,11 @@ pub async fn fetch_update(
     Ok(update_metadata)
 }
 
-#[tauri::command(async,rename = "download-update")]
+#[tauri::command]
 pub async fn install_update(state: State<'_, AppState>, on_event: Channel<DownloadEvent>) -> Result<()> {
     let Some(pending_update) =  state.pending_update.lock().unwrap().0.lock().unwrap().take() else{
         return Err(UpdaterError::NoPendingUpdate);
     };
-    // let Some(update) = pending_update.0.lock().unwrap().take() else {
-    //     return Err(UpdaterError::NoPendingUpdate);
-    // };
 
     let mut started = false;
 
