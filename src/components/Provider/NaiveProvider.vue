@@ -8,6 +8,7 @@ import {
   NModalProvider,
   useDialog,
   useLoadingBar,
+  useModal,
   useMessage,
   useNotification,
 } from 'naive-ui'
@@ -15,6 +16,7 @@ import {
 function registerNaiveTools() {
   window.$loadingBar = useLoadingBar()
   window.$dialog = useDialog()
+  window.$modal = useModal()
   window.$message = useMessage()
   window.$notification = useNotification()
 }

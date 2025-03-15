@@ -24,6 +24,16 @@ export interface Hotkey{
     dialog:string
 }
 
+
+export interface FavoriteMessage {
+    id: string;
+    content: string;
+    message_id: number;
+    model: string;
+    conversationId?: string;
+  }
+
+
 export interface Segment {
     raw:string;
     index?: number;

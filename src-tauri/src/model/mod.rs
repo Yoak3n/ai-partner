@@ -35,6 +35,15 @@ impl MessageItem {
         }    
     }
 }
+#[derive(Serialize,Deserialize)]
+pub struct FavoriteMessage{
+    pub id: usize,
+    pub message_id: usize,
+    pub content: String,
+    pub reasoning_content: String,
+    pub model: String,
+}
+
 
 
 pub enum MessageType {

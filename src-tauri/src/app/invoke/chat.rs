@@ -109,7 +109,7 @@ fn handle_stream_data(data: &[u8])->Option<Vec<MessageType>> {
 }
 
 
-use crate::model::{table::Conversation, MessageItem, MessageType, StreamData, StreamEmitter, StreamError};
+use crate::model::{table::Conversation, FavoriteMessage, MessageItem, MessageType, StreamData, StreamEmitter, StreamError};
 
 
 #[tauri::command]
@@ -168,9 +168,10 @@ pub async fn delete_conversation(
 #[tauri::command]
 pub async fn add_new_favorite(
     state: State<'_, AppState>,
-    message_id: i64
+    message: MessageItem
 )-> Result<i64, String>{
-    state.db.favorite_message(message_id)
+    let api = state.config.try_lock().expect("get config of state error").api.clone();
+    state.db.favorite_message(&message,api.model)
         .map_err(|e| e.to_string())
 }
 
@@ -186,7 +187,7 @@ pub async fn remove_favorite(
 #[tauri::command]
 pub async fn get_favorites(
     state: State<'_, AppState>
-)-> Result<Vec<MessageItem>, String>{
+)-> Result<Vec<FavoriteMessage>, String>{
     state.db.get_favorited_messages()
         .map_err(|e| e.to_string())
 }

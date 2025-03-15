@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
-import { NIcon } from 'naive-ui'
-import { InfiniteSharp } from '@vicons/ionicons5'
+import { nextTick, onMounted, onUnmounted, h, ref, type Component } from 'vue'
+import { NIcon, NDropdown } from 'naive-ui'
+import { InfiniteSharp, Heart } from '@vicons/ionicons5'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { UnlistenFn, listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
@@ -9,27 +9,30 @@ import { invoke } from '@tauri-apps/api/core'
 import { debounce, throttle } from '../../../utils'
 import { MessageItem, Payload } from '../../../types'
 import emitter from '../../../bus'
-import { registerNewListen,getUnlistenFnAndOff } from '../../../bus'
+import { registerNewListen, getUnlistenFnAndOff } from '../../../bus'
 import MarkdownRender from '../../../components/Markdown/index.vue'
 
-const messageContainer = ref<HTMLElement|null>(null);
+
+
+// handle scroll
+const messageContainer = ref<HTMLElement | null>(null);
 const userScrolling = ref(false);
 const scrollTimeout = ref<number | null>(null);
 const handleScroll = () => {
   if (!messageContainer.value) return;
-  
+
   // 检测是否滚动到底部
   const isAtBottom = messageContainer.value.scrollHeight - messageContainer.value.scrollTop <= messageContainer.value.clientHeight + 150;
-  
+
   // 如果不在底部，设置用户正在滚动状态
   if (!isAtBottom) {
     userScrolling.value = true;
-    
+
     // 清除之前的定时器
     if (scrollTimeout.value !== null) {
       clearTimeout(scrollTimeout.value);
     }
-    
+
     // 设置新的定时器，3秒后恢复自动滚动
     scrollTimeout.value = window.setTimeout(() => {
       userScrolling.value = false;
@@ -46,14 +49,16 @@ const handleScroll = () => {
 };
 const scrollToBottom = () => {
   if (messageContainer.value) {
-    if (!userScrolling.value){
+    if (!userScrolling.value) {
       messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
     }
   }
 };
 const throttleEmitScrollToBottom = throttle(() => scrollToBottom(), 500)
+
+// handle message
 let message = ref('')
-let dragging = ref(false)
+
 const submittMessage = () => {
   makeMessage(message.value)
   recircle()
@@ -65,7 +70,7 @@ const generating = ref(false)
 const makeMessage = async (question: string) => {
   timeId.value = Date.now()
   const messageItems: Array<MessageItem> = [{ role: 'user', content: question, reasoning_content: '', timestamp: timeId.value - 5 },]
-  setTimeout(()=>message.value = '',1000)
+  setTimeout(() => message.value = '', 300)
   const unlistenFnData = await listen('stream-data', (event) => {
     const payload = event.payload as Payload
     if (payload.id != timeId.value) return
@@ -87,6 +92,9 @@ const makeMessage = async (question: string) => {
     window.$message.error(e.toString(), { duration: 3000 })
   })
 }
+
+// handle drag
+let dragging = ref(false)
 const switchState = debounce(() => { dragging.value = false }, 300)
 let unlisten: UnlistenFn;
 onMounted(async () => {
@@ -105,13 +113,63 @@ const recircle = () => {
   emitter.emit('message-cleared')
   getUnlistenFnAndOff(timeId.value)
   generating.value = false
-  timeId.value = 0
+  // timeId.value = 0
   setTimeout(() => {
-    messageUpdate.value = { ...defaultMessage[0], content: '', reasoning_content: '',timestamp:timeId.value }
+    messageUpdate.value = { ...defaultMessage[0], content: '', reasoning_content: '', timestamp: timeId.value }
     emitter.emit('message-cleared')
   }, 300)
 }
 
+// handle favorite
+const renderIcon = (icon: Component, color?: string) => {
+  return () => {
+    return h(NIcon, { color }, {
+      default: () => h(icon)
+    })
+  }
+}
+const xRef = ref(0)
+const yRef = ref(0)
+const showDropdownRef = ref(false)
+const handleContextMenu = (e: MouseEvent) => {
+  e.preventDefault()
+  showDropdownRef.value = false
+  nextTick().then(() => {
+    showDropdownRef.value = true
+    xRef.value = e.clientX
+    yRef.value = e.clientY
+  })
+}
+const add_new_favorite = () => {
+  showDropdownRef.value = false
+  invoke('add_new_favorite', {
+    message: {
+      content: messageUpdate.value.content,
+      reasoning_content: messageUpdate.value.reasoning_content,
+      timestamp: timeId.value,
+      role: messageUpdate.value.role
+    }
+  }).then(() => {
+    window.$message.success('收藏成功',{ duration: 1000 ,showIcon:false})
+  }).catch((e) => {
+    window.$message.error(e.toString())
+  })
+}
+const options = [
+  {
+    label: '收藏',
+    key: 'favorite',
+    icon: renderIcon(Heart, '#e54d42')
+  }
+]
+const handleSelect = (key: string) => {
+  switch (key) {
+    case 'favorite':
+      add_new_favorite()
+      break
+  }
+
+}
 </script>
 
 
@@ -123,8 +181,8 @@ const recircle = () => {
 
 
     <div class="dialog-content">
-      <textarea class="dialog-textarea" :placeholder="generating ? '生成中...' : '输入你的问题'" rows="4" cols="50" v-model="message"
-        @keydown="(e) => {
+      <textarea class="dialog-textarea" :placeholder="generating ? '生成中...' : '输入你的问题'" rows="4" cols="50"
+        v-model="message" @keydown="(e) => {
           if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submittMessage() }
         }">
       </textarea>
@@ -134,18 +192,19 @@ const recircle = () => {
         </n-icon>
       </button>
     </div>
-    <div class="message-container" 
-      ref="messageContainer"
-      v-show="messageUpdate.reasoning_content !== '' || messageUpdate.content !== '' ">
-      <div class="output">
-        <div class="message-item"  v-if="messageUpdate.reasoning_content !== ''">
+    <div class="message-container" ref="messageContainer"
+      v-show="messageUpdate.reasoning_content !== '' || messageUpdate.content !== ''">
+      <div class="output" @contextmenu="handleContextMenu">
+        <div class="message-item" v-if="messageUpdate.reasoning_content !== ''">
           <div class="reasoning">{{ messageUpdate.reasoning_content }}</div>
         </div>
-        <div class="message-item" >
+        <div class="message-item">
           <div class="content" v-if="messageUpdate.content !== ''">
             <MarkdownRender :source="messageUpdate.content" />
           </div>
         </div>
+        <n-dropdown placement="bottom-start" trigger="manual" :x="xRef" :y="yRef" :show="showDropdownRef"
+          @clickoutside="() => showDropdownRef = false" :options="options" @select="handleSelect" />
       </div>
     </div>
   </div>
@@ -164,8 +223,8 @@ body {
   height: 100%;
   margin: 15px 0;
   padding: 0 15px;
-  max-height: calc(800px - 100px); 
-  scroll-behavior: smooth; 
+  max-height: calc(800px - 100px);
+  scroll-behavior: smooth;
 }
 
 .message-container::-webkit-scrollbar {
@@ -180,11 +239,12 @@ message-container::-webkit-scrollbar-thumb {
 message-container::-webkit-scrollbar-track {
   background-color: transparent;
 }
+
 .message-item {
   margin-bottom: 20px;
   animation: fadeIn 0.3s ease-in-out;
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -202,11 +262,13 @@ message-container::-webkit-scrollbar-track {
     height: 0;
     opacity: 0;
   }
+
   100% {
     height: 100%;
     opacity: 1;
   }
 }
+
 .output {
   line-height: 1.6;
   font-size: 15px;
@@ -214,6 +276,7 @@ message-container::-webkit-scrollbar-track {
   position: relative;
   z-index: 1;
 }
+
 .reasoning {
   padding: 12px 16px;
   color: rgba(255, 255, 255, 0.85);
@@ -225,12 +288,13 @@ message-container::-webkit-scrollbar-track {
   font-size: 14px;
   backdrop-filter: blur(5px);
   transition: all 0.3s ease;
-  
+
   &:hover {
     box-shadow: 0 6px 20px rgba(60, 60, 100, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
   }
 }
+
 .content {
   padding: 16px 20px;
   background: linear-gradient(135deg, rgba(111, 66, 193, 0.5), rgba(87, 54, 163, 0.4));
@@ -243,7 +307,7 @@ message-container::-webkit-scrollbar-track {
   letter-spacing: 0.3px;
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
-  
+
   &:hover {
     box-shadow: 0 8px 25px rgba(111, 66, 193, 0.25), inset 0 1px 5px rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
@@ -268,6 +332,7 @@ message-container::-webkit-scrollbar-track {
     transform: translateY(0);
   }
 }
+
 .dialog-bg {
   position: fixed;
   height: 100%;
@@ -276,6 +341,7 @@ message-container::-webkit-scrollbar-track {
   filter: blur(10px);
   z-index: -1;
 }
+
 .dialog-header {
   width: 50%;
   margin: 0 auto;
@@ -291,6 +357,7 @@ message-container::-webkit-scrollbar-track {
     background-color: rgba(200, 200, 200, .7);
   }
 }
+
 .dialog-content {
   padding: 10px;
   backdrop-filter: blur(10px);
@@ -322,12 +389,14 @@ message-container::-webkit-scrollbar-track {
     }
   }
 }
+
 .dialog {
   display: flex;
   height: 100%;
   flex-direction: column;
   box-sizing: border-box;
 }
+
 .dialog-textarea {
   width: 100%;
   height: 100%;

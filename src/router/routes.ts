@@ -18,6 +18,10 @@ const routes: RouteRecordRaw[] = [
         path: '/chat/:id',
         name: 'ChatDetail',
         component: () => import('../views/Chat.vue')
+      },{
+        path: '/favorite',
+        name: 'Favorite',
+        component: () => import('../views/Favorite.vue'),
       }
     ]
   },{

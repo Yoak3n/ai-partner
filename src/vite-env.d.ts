@@ -6,13 +6,14 @@ declare module "*.vue" {
   export default component;
 }
 
-import type { MessageApi, DialogApi,NotificationApi, LoadingBarApi } from 'naive-ui'
+import type { MessageApi, DialogApi,NotificationApi, LoadingBarApi,ModalApi } from 'naive-ui'
 declare global {
   interface Window {
     $loadingBar: LoadingBarApi
     $dialog: DialogApi
     $message: MessageApi
     $notification: NotificationApi
+    $modal: ModalApi
   }
   interface ImportMetaEnv {
     readonly __BUILD_TIME__: string;
