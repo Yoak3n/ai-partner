@@ -1,50 +1,89 @@
 <script setup lang="ts">
-import {  ref } from 'vue';
-import { invoke,Channel } from '@tauri-apps/api/core';
-import type { DownloadEvent } from '../composables';
-
-const progress = ref(0);
-const totalSize = ref(0);
-const downloading = ref(false);
-const finished = ref(false);
-async function installUpdate() {
-    downloading.value = true;
-    progress.value = 0;
-
-    const onEvent= new Channel<DownloadEvent>();
-    onEvent.onmessage=(message)=>{
-        if(message.event==='Started'){
-            downloading.value=true;
-            totalSize.value=message.data.contentLength;
-            console.log("started,total",totalSize.value);
-        }else if(message.event==='Progress'){
-            downloading.value=true;
-            progress.value+=message.data.chunkLength;
-            console.log("progress",progress.value);
-        }else if(message.event==='Finished'){
-            finished.value=true;
-        }
-    }
-
-
-
-    try {
-        // 调用后端函数，传递回调函数
-        await invoke('install_update', {
-            onEvent
-        });
-    } catch (error) {
-        console.error('安装更新失败:', error);
-        downloading.value = false;
-    }
-}
+import type { PropType } from 'vue';
+import {NTag} from 'naive-ui'
+import { VersionComparation } from '../composables';
+defineProps({
+  version: {
+    type: Object as PropType<VersionComparation>,
+    default: true,
+  },
+});
 
 </script>
 
 <template>
-    <button @click="installUpdate" :disabled="downloading">安装更新</button>
-    <div v-if="downloading && totalSize > 0">
-        下载进度: {{ Math.round((progress / totalSize) * 100) }}%
-    </div>
-    <div v-if="finished">更新下载完成，请重启应用以应用更新</div>
+    <div class="update-dialog">
+        <div class="update-header">
+          <div class="version-info">
+            <h2>发现新版本</h2>
+            <div class="version-tags">
+              <n-tag type="warning" size="small">当前版本: {{ version.current_version }}</n-tag>
+              <n-tag type="success" size="small">新版本: {{ version.version }}</n-tag>
+            </div>
+          </div>
+        </div>
+        
+        <div class="update-content">
+          <div class="update-notes">
+            <h3>更新内容</h3>
+            <div class="notes-content" v-if="version.note">
+              <div v-html="version.note.replace(/\n/g, '<br>')"></div>
+            </div>
+            <div class="notes-content empty" v-else>
+              暂无更新说明
+            </div>
+          </div>
+        </div>
+        
+      </div>
 </template>
+
+<style scoped lang="less">
+.update-dialog {
+    padding: 16px;
+    max-width: 500px;
+    
+    .update-header {
+      margin-bottom: 20px;
+      
+      h2 {
+        margin: 0 0 12px 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      
+      .version-tags {
+        display: flex;
+        gap: 8px;
+      }
+    }
+    
+    .update-content {
+      margin-bottom: 24px;
+      
+      .update-notes {
+        h3 {
+          font-size: 16px;
+          margin: 0 0 12px 0;
+          font-weight: 500;
+        }
+        
+        .notes-content {
+          background-color: #f9f9f9;
+          border-radius: 6px;
+          padding: 12px;
+          max-height: 200px;
+          overflow-y: auto;
+          line-height: 1.6;
+          font-size: 14px;
+          white-space: pre-wrap;
+          
+          &.empty {
+            color: #999;
+            font-style: italic;
+          }
+        }
+      }
+    }
+  }
+</style>

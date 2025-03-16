@@ -1,6 +1,7 @@
 export interface VersionComparation {
     current_version: string,
     version: string,
+    note: string,
 }
 
 export type DownloadEvent =

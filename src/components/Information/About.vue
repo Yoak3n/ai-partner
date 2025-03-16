@@ -102,12 +102,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, version, onBeforeUnmount } from 'vue';
+import { ref, reactive, onMounted, version, onBeforeUnmount, h } from 'vue';
 import { NTabs, NTabPane, NDivider, NAvatar, NBadge } from 'naive-ui';
 import type { MessageReactive } from 'naive-ui'
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell'
+
 import { AppInfo, getAppInfo, VersionComparation, DownloadEvent } from '../composables';
+import Updater from './Updater.vue';
 
 const darkMode = ref(false);
 let needUpdate = ref(false);
@@ -150,9 +152,10 @@ const getLatesetVersion = async () => {
   removeMessage()
   if (res != null && res.current_version != res.version) {
     needUpdate.value = true
+    console.log(res);
+    
     const d = window.$dialog.info({
-      title: '发现新版本',
-      content: `发现新版本${res.version},是否立即更新?`,
+      content: ()=>h(Updater, { version: res }),
       positiveText: '立即更新',
       negativeText: '取消',
       showIcon: false,
