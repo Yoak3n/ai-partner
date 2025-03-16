@@ -9,7 +9,7 @@
                     <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="72"
                         :collapsed-icon-size="22" :options="menuOptions" />
                     <div class="option-btn" style="display: flex;flex-direction: column;">
-                        <n-button text @click="router.push('/favorite')"
+                        <n-button text @click="()=>{activeKey = '';router.push('/favorite')}"
                             style="font-size: 48px;margin-bottom:2rem" size="large" class="setting">
                             <template #icon>
                                 <n-icon color="#e54d42">
