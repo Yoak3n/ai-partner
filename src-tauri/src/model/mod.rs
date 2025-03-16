@@ -8,7 +8,6 @@ pub struct MessageItem{
     pub content: String,
     pub reasoning_content: String,
     pub timestamp: usize,
-    pub favorited: Option<usize>
 }
 impl Default for MessageItem {
     fn default() -> Self {
@@ -16,8 +15,7 @@ impl Default for MessageItem {
             role: "assistant".to_string(),
             content: "".to_string(),
             reasoning_content: "".to_string(),
-            timestamp: 0,
-            favorited: None
+            timestamp: 0
         }
     }
 }

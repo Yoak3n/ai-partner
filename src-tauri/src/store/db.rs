@@ -29,7 +29,6 @@ impl Database {
                 role TEXT NOT NULL,
                 content TEXT NOT NULL,
                 reasoning_content TEXT,
-                favorited INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(conversation_id) REFERENCES conversations(id)
             )",
@@ -99,21 +98,19 @@ impl Database {
     pub fn get_conversation_messages(&self, conversation_id: i64) -> Result<Vec<MessageItem>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT role, content, reasoning_content ,id,favorited
+            "SELECT role, content, reasoning_content ,id
              FROM messages 
              WHERE conversation_id = ?1 
              ORDER BY created_at ASC",
         )?;
 
         let messages = stmt.query_map([conversation_id], |row| {
-            let favorited: Option<usize> = row.get(4)?;
             Ok(MessageItem {
                 role: row.get(0)?,
                 content: row.get(1)?,
                 reasoning_content: row.get(2)?,
                 timestamp: row.get(3)?,
                 // 通过对话获取消息不需要favorite字段
-                favorited,
             })
         })?;
 
