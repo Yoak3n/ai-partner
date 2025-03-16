@@ -17,7 +17,11 @@
               <span class="message-time">{{ formatTimeOnly(message.message_id) }}</span>
               <span class="message-model">{{ message.model }}</span>
             </div>
-            <div class="message-text">{{ message.content }}</div>
+            <div class="message-text">
+              <n-ellipsis line-clamp="1" style="max-width: 90%;" :tooltip="false">
+                {{ message.content }}
+              </n-ellipsis>
+            </div>
           </div>
           <div class="message-actions">
             <n-button size="small" @click="viewDetail(message)">查看详情</n-button>
@@ -44,10 +48,11 @@
 <script lang="ts" setup>
 import { ref, onMounted,h, onBeforeUnmount, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
-import { NEmpty, NButton, NPagination,NDivider } from 'naive-ui';
+import {listen, UnlistenFn} from '@tauri-apps/api/event'
+import { NEmpty, NButton, NPagination,NDivider,NEllipsis } from 'naive-ui';
 
 import { FavoriteMessage } from '../types';
-import { formatTimeOnly } from '../utils';
+import { formatTimeOnly,debounce } from '../utils';
 import FavoriteDetail from '../components/Modal/FavoriteDetail.vue';
 
 
@@ -56,31 +61,48 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalPages = ref(1);
 const groupedMessages = ref<Record<string, FavoriteMessage[]>>({});
+let unlistenRefresh:UnlistenFn;
 onMounted(() => {
   loadFavoriteMessages();
-  window.addEventListener('resize', handleResize);
+  window.addEventListener('resize', debouncedHandleResize);
+  listen('refresh_favorite',()=>{
+    loadFavoriteMessages();
+  }).then((fn)=>unlistenRefresh = fn)
 });
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('resize', debouncedHandleResize);
+  if(unlistenRefresh){
+    unlistenRefresh();
+  }
 });
 
 const handleResize = () => {
+  const oldPageSize = pageSize.value;
   calculatePageSize();
+  if (oldPageSize !== pageSize.value) {
+    groupMessagesByDate();
+  }
 };
+const debouncedHandleResize = debounce(handleResize, 200);
 const calculatePageSize = () => {
-  // 获取视窗高度
   const viewportHeight = window.innerHeight;
-  // 估算每个消息项的高度（包括边距）
-  const itemHeight = 150; // 假设平均高度为150px
-  // 减去其他UI元素占用的空间（头部、分页器等）
+  const itemHeight = 120; // 假设平均高度为120px
   const availableHeight = viewportHeight - 200;
-  // 计算可以显示的消息数量
   const calculatedSize = Math.max(5, Math.floor(availableHeight / itemHeight));
   
+  const oldPageSize = pageSize.value;
+  const oldCurrentPage = currentPage.value;
+
   pageSize.value = calculatedSize;
-  // 重新计算总页数
+
   if (favoriteMessages.value.length > 0) {
     totalPages.value = Math.ceil(favoriteMessages.value.length / pageSize.value);
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value;
+    }
+    if (oldPageSize !== pageSize.value || oldCurrentPage !== currentPage.value) {
+      groupMessagesByDate();
+    }
   }
 };
 const currentPageMessages = computed(() => {
@@ -113,8 +135,12 @@ const viewDetail = (msg: FavoriteMessage) => {
 const removeFavorite = (message_id: number) => {
   try {
     invoke('remove_favorite', { messageId:message_id }).then(()=>{
-      favoriteMessages.value = favoriteMessages.value.filter(msg => msg.message_id !== msg.message_id);
+      favoriteMessages.value = favoriteMessages.value.filter(msg => msg.message_id !== message_id);
       window.$message.success('已取消收藏',{duration:2000})
+      totalPages.value = Math.ceil(favoriteMessages.value.length / pageSize.value);
+      if (currentPageMessages.value.length === 0 && currentPage.value > 1) {
+        currentPage.value--;
+      }
       groupMessagesByDate();
     });
   } catch (e) {

@@ -12,7 +12,7 @@
                         <n-button text @click="router.push('/favorite')"
                             style="font-size: 48px;margin-bottom:2rem" size="large" class="setting">
                             <template #icon>
-                                <n-icon>
+                                <n-icon color="#e54d42">
                                     <Heart />
                                 </n-icon>
                             </template>

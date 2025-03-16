@@ -30,7 +30,7 @@ export interface FavoriteMessage {
     content: string;
     message_id: number;
     model: string;
-    conversationId?: string;
+    reasoning_content?: string;
   }
 
 

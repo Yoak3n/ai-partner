@@ -2,7 +2,7 @@ use futures::StreamExt;
 use reqwest::{Client,header::{HeaderMap,HeaderValue,AUTHORIZATION}};
 use serde_json::json;
 use super::super::state::AppState;
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 #[tauri::command]
 pub async fn completions_stream(app_handle: tauri::AppHandle, state: State<'_,AppState>,id: usize,messages:Vec<MessageItem>) -> Result<MessageItem, String> {
     let api = state.config.try_lock().expect("get config of state error").api.clone();
@@ -109,7 +109,7 @@ fn handle_stream_data(data: &[u8])->Option<Vec<MessageType>> {
 }
 
 
-use crate::model::{table::Conversation, FavoriteMessage, MessageItem, MessageType, StreamData, StreamEmitter, StreamError};
+use crate::{app::APP, model::{table::Conversation, FavoriteMessage, MessageItem, MessageType, StreamData, StreamEmitter, StreamError}};
 
 
 #[tauri::command]
@@ -160,8 +160,10 @@ pub async fn delete_conversation(
     state: State<'_, AppState>,
     conversation_id: i64
 ) -> Result<(), String> {
-    state.db.delete_conversation(conversation_id)
-        .map_err(|e| e.to_string())
+    state
+        .db
+            .delete_conversation(conversation_id)
+            .map_err(|e| e.to_string())
 }
 
 
@@ -171,8 +173,15 @@ pub async fn add_new_favorite(
     message: MessageItem
 )-> Result<i64, String>{
     let api = state.config.try_lock().expect("get config of state error").api.clone();
-    state.db.favorite_message(&message,api.model)
-        .map_err(|e| e.to_string())
+    match state.db.favorite_message(&message,api.model)
+    .map_err(|e| e.to_string()) {
+        Ok(id) => {
+            let handle = APP.get().take().unwrap().app_handle();
+            handle.emit("refresh_favorite", ()).unwrap();
+            Ok(id)
+        },
+        Err(e) => Err(e)
+    }
 }
 
 #[tauri::command]
@@ -180,8 +189,17 @@ pub async fn remove_favorite(
     state: State<'_, AppState>,
     message_id: i64
 )-> Result<(), String>{
-    state.db.unfavorite_message(message_id)
-        .map_err(|e| e.to_string())
+    match state
+            .db
+                .unfavorite_message(message_id)
+                .map_err(|e| e.to_string()){
+            Ok(_) => {
+                let handle = APP.get().take().unwrap().app_handle();
+                handle.emit("refresh_favorite", ()).unwrap();
+                Ok(())
+            },
+            Err(e) => Err(e)
+        }
 }
 
 #[tauri::command]
