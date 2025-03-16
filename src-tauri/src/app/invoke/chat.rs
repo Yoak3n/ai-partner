@@ -123,7 +123,7 @@ pub async fn pause_stream(app: tauri::AppHandle,id:usize) -> Result<(), String> 
 }
 
 use tauri::State;
-
+use crate::store::module::*;
 
 #[tauri::command]
 pub async fn create_conversation(state: State<'_, AppState>, title: String) -> Result<i64, String> {

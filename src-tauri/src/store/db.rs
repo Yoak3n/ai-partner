@@ -1,4 +1,5 @@
-use crate::model::{table::Conversation, MessageItem, FavoriteMessage};
+use crate::model::{table::{Conversation,Tag}, MessageItem, FavoriteMessage};
+use super::module::*;
 use rusqlite::{Connection, Result};
 use std::path::PathBuf;
 use std::sync::RwLock;
@@ -48,17 +49,44 @@ impl Database {
             [],
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tags (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                color TEXT NOT NULL DEFAULT '#1890ff',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        )?;
+        // 创建消息-标签关联表
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS message_tags (
+                message_id INTEGER NOT NULL,
+                tag_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (message_id, tag_id),
+                FOREIGN KEY(message_id) REFERENCES favorites(message_id),
+                FOREIGN KEY(tag_id) REFERENCES tags(id)
+            )",
+            [],
+        )?;
+
         Ok(Database {
             conn: RwLock::new(conn),
         })
     }
-    pub fn create_conversation(&self, title: &str) -> Result<i64> {
+
+}
+
+// 实现会话管理 trait
+impl ConversationManager for Database {
+    fn create_conversation(&self, title: &str) -> Result<i64> {
         let conn: std::sync::RwLockWriteGuard<'_, Connection> = self.conn.write().unwrap();
         conn.execute("INSERT INTO conversations (title) VALUES (?1)", [title])?;
         Ok(conn.last_insert_rowid())
     }
-
-    pub fn get_conversations(&self) -> Result<Vec<Conversation>> {
+    
+    fn get_conversations(&self) -> Result<Vec<Conversation>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn
             .prepare("SELECT id, title, created_at FROM conversations ORDER BY created_at DESC")?;
@@ -73,8 +101,29 @@ impl Database {
 
         conversations.collect()
     }
+    
+    fn delete_conversation(&self, conversation_id: i64) -> Result<()> {
+        let mut conn = self.conn.write().unwrap();
+        // 开始事务
+        let tx = conn.transaction()?;
 
-    pub fn save_message(&self, conversation_id: i64, message: &MessageItem) -> Result<i64> {
+        // 先删除对话相关的所有消息
+        tx.execute(
+            "DELETE FROM messages WHERE conversation_id = ?",
+            [conversation_id],
+        )?;
+
+        // 再删除对话本身
+        tx.execute("DELETE FROM conversations WHERE id = ?", [conversation_id])?;
+
+        // 提交事务
+        tx.commit()?;
+        Ok(())
+    }
+}
+// 实现消息管理 trait
+impl MessageManager for Database {
+    fn save_message(&self, conversation_id: i64, message: &MessageItem) -> Result<i64> {
         let conn = self.conn.write().unwrap();
         conn.execute(
             "INSERT INTO messages (
@@ -95,7 +144,7 @@ impl Database {
         Ok(conn.last_insert_rowid())
     }
 
-    pub fn get_conversation_messages(&self, conversation_id: i64) -> Result<Vec<MessageItem>> {
+    fn get_conversation_messages(&self, conversation_id: i64) -> Result<Vec<MessageItem>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
             "SELECT role, content, reasoning_content ,id
@@ -116,26 +165,10 @@ impl Database {
 
         messages.collect()
     }
-    pub fn delete_conversation(&self, conversation_id: i64) -> Result<()> {
-        let mut conn = self.conn.write().unwrap();
-        // 开始事务
-        let tx = conn.transaction()?;
-
-        // 先删除对话相关的所有消息
-        tx.execute(
-            "DELETE FROM messages WHERE conversation_id = ?",
-            [conversation_id],
-        )?;
-
-        // 再删除对话本身
-        tx.execute("DELETE FROM conversations WHERE id = ?", [conversation_id])?;
-
-        // 提交事务
-        tx.commit()?;
-        Ok(())
-    }
-
-    pub fn favorite_message(&self, message: &MessageItem,model:String) -> Result<i64> {
+}
+// 实现收藏管理 trait
+impl FavoriteManager for Database {
+    fn favorite_message(&self, message: &MessageItem, model: String) -> Result<i64> {
         let conn = self.conn.write().unwrap();
         conn.execute(
             "INSERT OR IGNORE INTO favorites (
@@ -151,24 +184,24 @@ impl Database {
                 model
             ),
         )?;
-        // conn.execute(
-        //     "UPDATE messages SET favorited = 1 WHERE id = ?",
-        //  [message_id])?;
         Ok(conn.last_insert_rowid())
     }
-    pub fn unfavorite_message(&self, message_id: i64) -> Result<()> {
+    
+    fn unfavorite_message(&self, message_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute("DELETE FROM favorites WHERE message_id = ?", [message_id])?;
-        // conn.execute(
-        //     "UPDATE messages SET favorited = 0 WHERE id = ?",
-        //     [message_id],
-        // )?;
         Ok(())
     }
-
-    pub fn get_favorited_messages(&self) -> Result<Vec<FavoriteMessage>> {
+    
+    fn get_favorited_messages(&self) -> Result<Vec<FavoriteMessage>> {
         let conn = self.conn.read().unwrap();
-        // let mut stmt = conn.prepare(
+        let mut stmt = conn.prepare(
+            "SELECT 
+                id, message_id, content, reasoning_content, model
+                FROM favorites
+                ORDER BY created_at DESC",
+        )?;
+        //  let mut stmt = conn.prepare(
         //     "SELECT
         //         m.role,
         //         m.content,
@@ -185,13 +218,6 @@ impl Database {
         //     ORDER BY
         //         f.created_at DESC;"
         // )?;
-        let mut stmt = conn.prepare(
-            "SELECT 
-                id, message_id, content, reasoning_content,model,created_at
-                FROM favorites
-                ORDER BY created_at DESC",
-        )?;
-
         let messages = stmt.query_map([], |row| {
             Ok(FavoriteMessage {
                 id: row.get(0)?,
@@ -202,6 +228,127 @@ impl Database {
             })
         })?;
         messages.collect()
+    }
+}
+// 实现标签管理 trait
+impl TagManager for Database {
+    fn create_tag(&self, name: &str, color: &str) -> Result<i64> {
+        let conn = self.conn.write().unwrap();
+        conn.execute(
+            "INSERT INTO tags (name, color) VALUES (?1, ?2)",
+            [name, color],
+        )?;
+        Ok(conn.last_insert_rowid())
+    }
+    
+    fn get_tags(&self) -> Result<Vec<Tag>> {
+        let conn = self.conn.read().unwrap();
+        let mut stmt = conn.prepare("SELECT id, name, color, created_at FROM tags ORDER BY name")?;
+        
+        let tags = stmt.query_map([], |row| {
+            Ok(Tag {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                color: row.get(2)?,
+                created_at: row.get(3)?,
+            })
+        })?;
+        
+        tags.collect()
+    }
+    
+    fn add_tag_to_message(&self, message_id: i64, tag_id: i64) -> Result<()> {
+        let conn = self.conn.write().unwrap();
+        conn.execute(
+            "INSERT OR IGNORE INTO message_tags (message_id, tag_id) VALUES (?1, ?2)",
+            [message_id, tag_id],
+        )?;
+        Ok(())
+    }
+    
+    fn remove_tag_from_message(&self, message_id: i64, tag_id: i64) -> Result<()> {
+        let conn = self.conn.write().unwrap();
+        conn.execute(
+            "DELETE FROM message_tags WHERE message_id = ?1 AND tag_id = ?2",
+            [message_id, tag_id],
+        )?;
+        Ok(())
+    }
+    
+    fn get_message_tags(&self, message_id: usize) -> Result<Vec<Tag>> {
+        let conn = self.conn.read().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT t.id, t.name, t.color, t.created_at 
+             FROM tags t
+             JOIN message_tags mt ON t.id = mt.tag_id
+             WHERE mt.message_id = ?1
+             ORDER BY t.name"
+        )?;
+        
+        let tags = stmt.query_map([message_id], |row| {
+            Ok(Tag {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                color: row.get(2)?,
+                created_at: row.get(3)?,
+            })
+        })?;
+        
+        tags.collect()
+    }
+    
+    fn get_messages_by_tag(&self, tag_id: i64) -> Result<Vec<FavoriteMessage>> {
+        let conn = self.conn.read().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT f.id, f.message_id, f.content, f.reasoning_content, f.model
+             FROM favorites f
+             JOIN message_tags mt ON f.message_id = mt.message_id
+             WHERE mt.tag_id = ?1
+             ORDER BY f.created_at DESC"
+        )?;
+        
+        let messages = stmt.query_map([tag_id], |row| {
+            Ok(FavoriteMessage {
+                id: row.get(0)?,
+                message_id: row.get(1)?,
+                content: row.get(2)?,
+                reasoning_content: row.get(3)?,
+                model: row.get(4)?,
+            })
+        })?;
+        
+        messages.collect()
+    }
+    
+    fn get_favorited_messages_with_tags(&self) -> Result<Vec<(FavoriteMessage, Vec<Tag>)>> {
+        let conn = self.conn.read().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT 
+                id, message_id, content, reasoning_content, model
+                FROM favorites
+                ORDER BY created_at DESC"
+        )?;
+        
+        let messages = stmt.query_map([], |row| {
+            let message = FavoriteMessage {
+                id: row.get(0)?,
+                message_id: row.get(1)?,
+                content: row.get(2)?,
+                reasoning_content: row.get(3)?,
+                model: row.get(4)?,
+            };
+            
+            Ok(message)
+        })?;
+        
+        let mut result = Vec::new();
+        for message_result in messages {
+            let message = message_result?;
+            let tags = self.get_message_tags(message.message_id)?;
+            result.push((message, tags));
+        }
+        
+        Ok(result)
     }
 }
 
