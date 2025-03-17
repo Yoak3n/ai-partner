@@ -121,4 +121,3 @@ impl PendingUpdate {
         Self(Mutex::new(None))
     }
 }
-

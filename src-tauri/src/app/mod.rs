@@ -46,8 +46,8 @@ pub fn run() {
         // OS
         .invoke_handler(generate_handler![
             #[cfg(desktop)]
-            invoke::operation::create_dialog,  
-            #[cfg(desktop)]          
+            invoke::operation::create_dialog,
+            #[cfg(desktop)]
             invoke::operation::get_app_install_path,
         ])
         // App

@@ -1,5 +1,8 @@
-use crate::model::{table::{Conversation,Tag}, MessageItem, FavoriteMessage};
 use super::module::*;
+use crate::model::{
+    table::{Conversation, Tag},
+    FavoriteMessage, MessageItem,
+};
 use rusqlite::{Connection, Result};
 use std::path::PathBuf;
 use std::sync::RwLock;
@@ -75,7 +78,6 @@ impl Database {
             conn: RwLock::new(conn),
         })
     }
-
 }
 
 // 实现会话管理 trait
@@ -85,7 +87,7 @@ impl ConversationManager for Database {
         conn.execute("INSERT INTO conversations (title) VALUES (?1)", [title])?;
         Ok(conn.last_insert_rowid())
     }
-    
+
     fn get_conversations(&self) -> Result<Vec<Conversation>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn
@@ -101,7 +103,7 @@ impl ConversationManager for Database {
 
         conversations.collect()
     }
-    
+
     fn delete_conversation(&self, conversation_id: i64) -> Result<()> {
         let mut conn = self.conn.write().unwrap();
         // 开始事务
@@ -181,18 +183,18 @@ impl FavoriteManager for Database {
                 message.timestamp,
                 &message.reasoning_content,
                 &message.content,
-                model
+                model,
             ),
         )?;
         Ok(conn.last_insert_rowid())
     }
-    
+
     fn unfavorite_message(&self, message_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute("DELETE FROM favorites WHERE message_id = ?", [message_id])?;
         Ok(())
     }
-    
+
     fn get_favorited_messages(&self) -> Result<Vec<FavoriteMessage>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
@@ -240,11 +242,12 @@ impl TagManager for Database {
         )?;
         Ok(conn.last_insert_rowid())
     }
-    
+
     fn get_tags(&self) -> Result<Vec<Tag>> {
         let conn = self.conn.read().unwrap();
-        let mut stmt = conn.prepare("SELECT id, name, color, created_at FROM tags ORDER BY name")?;
-        
+        let mut stmt =
+            conn.prepare("SELECT id, name, color, created_at FROM tags ORDER BY name")?;
+
         let tags = stmt.query_map([], |row| {
             Ok(Tag {
                 id: row.get(0)?,
@@ -253,10 +256,10 @@ impl TagManager for Database {
                 created_at: row.get(3)?,
             })
         })?;
-        
+
         tags.collect()
     }
-    
+
     fn add_tag_to_message(&self, message_id: usize, tag_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute(
@@ -265,7 +268,7 @@ impl TagManager for Database {
         )?;
         Ok(())
     }
-    
+
     fn remove_tag_from_message(&self, message_id: usize, tag_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute(
@@ -274,7 +277,7 @@ impl TagManager for Database {
         )?;
         Ok(())
     }
-    
+
     fn get_message_tags(&self, message_id: usize) -> Result<Vec<Tag>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
@@ -282,9 +285,9 @@ impl TagManager for Database {
              FROM tags t
              JOIN message_tags mt ON t.id = mt.tag_id
              WHERE mt.message_id = ?1
-             ORDER BY t.name"
+             ORDER BY t.name",
         )?;
-        
+
         let tags = stmt.query_map([message_id], |row| {
             Ok(Tag {
                 id: row.get(0)?,
@@ -293,10 +296,10 @@ impl TagManager for Database {
                 created_at: row.get(3)?,
             })
         })?;
-        
+
         tags.collect()
     }
-    
+
     fn get_messages_by_tag(&self, tag_id: i64) -> Result<Vec<FavoriteMessage>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
@@ -304,9 +307,9 @@ impl TagManager for Database {
              FROM favorites f
              JOIN message_tags mt ON f.message_id = mt.message_id
              WHERE mt.tag_id = ?1
-             ORDER BY f.created_at DESC"
+             ORDER BY f.created_at DESC",
         )?;
-        
+
         let messages = stmt.query_map([tag_id], |row| {
             Ok(FavoriteMessage {
                 id: row.get(0)?,
@@ -316,19 +319,19 @@ impl TagManager for Database {
                 model: row.get(4)?,
             })
         })?;
-        
+
         messages.collect()
     }
-    
+
     fn get_favorited_messages_with_tags(&self) -> Result<Vec<(FavoriteMessage, Vec<Tag>)>> {
         let conn = self.conn.read().unwrap();
         let mut stmt = conn.prepare(
             "SELECT 
                 id, message_id, content, reasoning_content, model
                 FROM favorites
-                ORDER BY created_at DESC"
+                ORDER BY created_at DESC",
         )?;
-        
+
         let messages = stmt.query_map([], |row| {
             let message = FavoriteMessage {
                 id: row.get(0)?,
@@ -337,17 +340,17 @@ impl TagManager for Database {
                 reasoning_content: row.get(3)?,
                 model: row.get(4)?,
             };
-            
+
             Ok(message)
         })?;
-        
+
         let mut result = Vec::new();
         for message_result in messages {
             let message = message_result?;
             let tags = self.get_message_tags(message.message_id)?;
             result.push((message, tags));
         }
-        
+
         Ok(result)
     }
 }
