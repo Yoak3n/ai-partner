@@ -257,20 +257,20 @@ impl TagManager for Database {
         tags.collect()
     }
     
-    fn add_tag_to_message(&self, message_id: i64, tag_id: i64) -> Result<()> {
+    fn add_tag_to_message(&self, message_id: usize, tag_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute(
             "INSERT OR IGNORE INTO message_tags (message_id, tag_id) VALUES (?1, ?2)",
-            [message_id, tag_id],
+            [message_id, tag_id.try_into().unwrap()],
         )?;
         Ok(())
     }
     
-    fn remove_tag_from_message(&self, message_id: i64, tag_id: i64) -> Result<()> {
+    fn remove_tag_from_message(&self, message_id: usize, tag_id: i64) -> Result<()> {
         let conn = self.conn.write().unwrap();
         conn.execute(
             "DELETE FROM message_tags WHERE message_id = ?1 AND tag_id = ?2",
-            [message_id, tag_id],
+            [message_id, tag_id.try_into().unwrap()],
         )?;
         Ok(())
     }

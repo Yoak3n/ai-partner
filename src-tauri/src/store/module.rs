@@ -23,8 +23,8 @@ pub trait FavoriteManager {
 pub trait TagManager {
     fn create_tag(&self, name: &str, color: &str) -> Result<i64,Error>;
     fn get_tags(&self) -> Result<Vec<Tag>,Error>;
-    fn add_tag_to_message(&self, message_id: i64, tag_id: i64) -> Result<(),Error>;
-    fn remove_tag_from_message(&self, message_id: i64, tag_id: i64) -> Result<(),Error>;
+    fn add_tag_to_message(&self, message_id: usize, tag_id: i64) -> Result<(),Error>;
+    fn remove_tag_from_message(&self, message_id: usize, tag_id: i64) -> Result<(),Error>;
     fn get_message_tags(&self, message_id: usize) -> Result<Vec<Tag>,Error>;
     fn get_messages_by_tag(&self, tag_id: i64) -> Result<Vec<FavoriteMessage>,Error>;
     fn get_favorited_messages_with_tags(&self) -> Result<Vec<(FavoriteMessage, Vec<Tag>)>,Error>;

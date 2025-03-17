@@ -4,5 +4,4 @@ pub mod db;
 pub mod module;
 pub enum WindowState {}
 
-pub struct AppState {}
 
