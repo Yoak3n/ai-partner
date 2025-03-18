@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import {NTag} from 'naive-ui'
+import { computed, type PropType } from 'vue';
+import {NTag,NProgress} from 'naive-ui'
 import { VersionComparation } from '../composables';
-defineProps({
+
+const props = defineProps({
   version: {
     type: Object as PropType<VersionComparation>,
     default: true,
   },
+  content:{
+    type:Number,
+    default:0
+  },
+  downloaded:{
+    type:Number,
+    default:0
+  }
 });
+const percent = computed(()=>{return Math.floor(props.downloaded/props.content)*100})
 
 </script>
 
@@ -19,6 +29,9 @@ defineProps({
             <div class="version-tags">
               <n-tag type="warning" size="small">当前版本: {{ version.current_version }}</n-tag>
               <n-tag type="success" size="small">新版本: {{ version.version }}</n-tag>
+            </div>
+            <div class="update-progress" v-if="content !=0">
+              <n-progress :percentage="percent" :stroke-width="12" />
             </div>
           </div>
         </div>

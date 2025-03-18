@@ -68,7 +68,6 @@ pub async fn install_update(
     };
 
     let mut started = false;
-
     let buf = pending_update
         .download(
             |chunk_length, content_length| {

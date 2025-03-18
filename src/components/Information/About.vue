@@ -114,6 +114,8 @@ import Updater from './Updater.vue';
 const darkMode = ref(false);
 let needUpdate = ref(false);
 let messageReactive: MessageReactive | null = null
+const content_size = ref(0)
+const downloaded_size = ref(0)
 let appInfo = reactive<AppInfo>({ version: '', name: '', buildDate: '', buildNumber: '', configPath: '', logo: '', tauriVersion: '', });
 
 onMounted(async () => {
@@ -133,7 +135,15 @@ const openLogsFolder = async () => {
 }
 async function install_update() {
   const onEvent = new Channel<DownloadEvent>();
-  onEvent.onmessage = () => { }
+  onEvent.onmessage = (res) => { 
+    if(res.event == 'Started'){
+      content_size.value = res.data.contentLength
+    }else if(res.event == 'Progress'){
+      downloaded_size.value += res.data.chunkLength
+    }else{
+      window.$message.success('更新成功')
+    }
+  }
   try {
     await invoke('install_update', { onEvent });
   } catch (error) {
@@ -150,7 +160,7 @@ const fetchUpdate = async ():Promise<VersionComparation|null> => {
 
 const createUpdateDialog = async (version:VersionComparation) => {
   const d = window.$dialog.info({
-      content: ()=>h(Updater, { version: version }),
+      content: ()=>h(Updater, { version: version,content: content_size.value,downloaded: downloaded_size.value}),
       positiveText: '立即更新',
       negativeText: '取消',
       showIcon: false,
