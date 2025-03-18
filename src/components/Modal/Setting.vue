@@ -70,7 +70,9 @@
                 }" 
                 @focus="()=>{
                     DialogHotkeyChanged = true
-                    unregister(model!.hotkey.dialog)
+                    if (model!.hotkey.dialog != '') {
+                        unregister(model!.hotkey.dialog)
+                    }
                     model!.hotkey.dialog = '';
                 }"
                 />

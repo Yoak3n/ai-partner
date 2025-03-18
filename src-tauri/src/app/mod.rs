@@ -45,20 +45,16 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         // OS
         .invoke_handler(generate_handler![
+            // App
             #[cfg(desktop)]
             invoke::operation::create_dialog,
             #[cfg(desktop)]
             invoke::operation::get_app_install_path,
-        ])
-        // App
-        .invoke_handler(generate_handler![
             #[cfg(desktop)]
             invoke::operation::register_shortcut_by_frontend,
             invoke::operation::set_config,
             invoke::operation::get_config,
-        ])
-        // Chat
-        .invoke_handler(generate_handler![
+            // Chat
             invoke::chat::completions_stream,
             invoke::chat::pause_stream,
             invoke::chat::create_conversation,
@@ -69,16 +65,12 @@ pub fn run() {
             invoke::favorite::add_new_favorite,
             invoke::favorite::remove_favorite,
             invoke::favorite::get_favorites,
-        ])
-        // Updater
-        .invoke_handler(generate_handler![
+            // Updater
             #[cfg(desktop)]
             invoke::update::fetch_update,
             #[cfg(desktop)]
             invoke::update::install_update,
-        ])
-        // Tag
-        .invoke_handler(generate_handler![
+            // Tag
             invoke::tag::add_tag,
             invoke::tag::get_tags,
             invoke::tag::add_tag_to_message,
@@ -93,12 +85,8 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 let app_handle = app.handle().clone();
-                // interaction::register_shortcuts(app)?;
                 interaction::create_systray(app)?;
                 app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
-                // tauri::async_runtime::spawn(async move {
-                //     updater::update(app_handle).await.unwrap();
-                //   });
                 APP.get_or_init(|| app.handle().clone());
 
                 match register_shortcut("all") {
@@ -110,7 +98,9 @@ pub fn run() {
                             .title("Failed to register global shortcut")
                             .icon("ai-partner")
                             .show()
-                            .unwrap_or_else(|e| println!("Failed to show notification: {}", e));
+                            .unwrap_or_else(|e| 
+                                println!("Failed to show notification: {}", e)
+                            );
                     }
                 }
             }

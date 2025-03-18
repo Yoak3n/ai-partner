@@ -122,6 +122,7 @@ onMounted(async () => {
   const res = await fetchUpdate()
   if (res != null && res.version != res.current_version) {
     needUpdate.value = true
+    createUpdateDialog(res)
   }
 });
 onBeforeUnmount(() => removeMessage());
@@ -146,16 +147,10 @@ const fetchUpdate = async ():Promise<VersionComparation|null> => {
   } catch (e) {return null}
 
 }
-const getLatesetVersion = async () => {
-  if (!messageReactive) { messageReactive = window.$message.loading('正在检查更新...', { duration: 0 });}
-  const res = await fetchUpdate()
-  removeMessage()
-  if (res != null && res.current_version != res.version) {
-    needUpdate.value = true
-    console.log(res);
-    
-    const d = window.$dialog.info({
-      content: ()=>h(Updater, { version: res }),
+
+const createUpdateDialog = async (version:VersionComparation) => {
+  const d = window.$dialog.info({
+      content: ()=>h(Updater, { version: version }),
       positiveText: '立即更新',
       negativeText: '取消',
       showIcon: false,
@@ -168,6 +163,15 @@ const getLatesetVersion = async () => {
         d.loading = false
       },
     });
+}
+
+const getLatesetVersion = async () => {
+  if (!messageReactive) { messageReactive = window.$message.loading('正在检查更新...', { duration: 0 });}
+  const res = await fetchUpdate()
+  removeMessage()
+  if (res != null && res.current_version != res.version) {
+    needUpdate.value = true
+    createUpdateDialog(res)
   }else{
     window.$message.info('当前已是最新版本')
   }

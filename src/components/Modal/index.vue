@@ -1,6 +1,6 @@
 <template>
 
-        <n-modal :show="props.show" @update:show="()=>props.switchCallback(!show)" >
+        <n-modal :show="props.show" @update:show="()=>props.switchCallback(!show)" :auto-focus="false">
             <n-card size="large">
                 <n-config-provider :theme-overrides="modalThemeOverrides" v-if="props.modalKey==='setting'">
                 <SettingView :switchCallback="props.switchCallback"  />

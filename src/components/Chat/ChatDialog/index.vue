@@ -6,7 +6,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { UnlistenFn, listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
 
-import { debounce, throttle } from '../../../utils'
+import { debounce, throttle,addCopyButtons } from '../../../utils'
 import { MessageItem, Payload } from '../../../types'
 import emitter from '../../../bus'
 import { registerNewListen, getUnlistenFnAndOff } from '../../../bus'
@@ -62,6 +62,7 @@ let message = ref('')
 const submittMessage = () => {
   makeMessage(message.value)
   recircle()
+  addCopyButtons()
 }
 let timeId = ref(0);
 const defaultMessage = [{ role: 'assistant', content: '', reasoning_content: '' }]
