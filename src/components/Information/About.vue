@@ -109,6 +109,7 @@ import { invoke, Channel } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell'
 
 import { AppInfo, getAppInfo, VersionComparation, DownloadEvent } from '../composables';
+import emitter from '../../bus';
 import Updater from './Updater.vue';
 
 const darkMode = ref(false);
@@ -133,9 +134,18 @@ const openLogsFolder = async () => {
   const pwd = await invoke('get_app_install_path')
   open(pwd as string)
 }
+const fetchUpdate = async ():Promise<VersionComparation|null> => {
+  try {
+    const res: VersionComparation = await invoke('fetch_update')
+    return res
+  } catch (e) {return null}
+
+}
 async function install_update() {
   const onEvent = new Channel<DownloadEvent>();
   onEvent.onmessage = (res) => { 
+    console.log(res.data);
+    
     if(res.event == 'Started'){
       content_size.value = res.data.contentLength
     }else if(res.event == 'Progress'){
@@ -150,29 +160,18 @@ async function install_update() {
     window.$message.error('安装更新失败:' + error);
   }
 }
-const fetchUpdate = async ():Promise<VersionComparation|null> => {
-  try {
-    const res: VersionComparation = await invoke('fetch_update')
-    return res
-  } catch (e) {return null}
-
-}
 
 const createUpdateDialog = async (version:VersionComparation) => {
-  const d = window.$dialog.info({
-      content: ()=>h(Updater, { version: version,content: content_size.value,downloaded: downloaded_size.value}),
-      positiveText: '立即更新',
-      negativeText: '取消',
-      showIcon: false,
-      closable: false,
-      autoFocus: false,
-      actionClass: 'update-dialog-action',
-      onPositiveClick: async () => {
-        d.loading = true
-        await install_update()
-        d.loading = false
-      },
-    });
+  emitter.on('install_update', install_update)
+  window.$dialog.info({
+    content: ()=>h(Updater, { version: version,content: content_size.value,downloaded: downloaded_size.value}),
+    showIcon: false,
+    closable: false,
+    autoFocus: false,
+    onClose: () => {
+      emitter.off('install_update', install_update)
+    },
+  });
 }
 
 const getLatesetVersion = async () => {

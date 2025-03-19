@@ -2,7 +2,7 @@
 import { computed, type PropType } from 'vue';
 import {NTag,NProgress} from 'naive-ui'
 import { VersionComparation } from '../composables';
-
+import emitter from '../../bus';
 const props = defineProps({
   version: {
     type: Object as PropType<VersionComparation>,
@@ -17,7 +17,9 @@ const props = defineProps({
     default:0
   }
 });
-const percent = computed(()=>{return Math.floor(props.downloaded/props.content)*100})
+const percent = computed(()=>{
+  return props.content == 0 ? 0: Math.floor(props.downloaded/props.content)*100
+})
 
 </script>
 
@@ -30,12 +32,20 @@ const percent = computed(()=>{return Math.floor(props.downloaded/props.content)*
               <n-tag type="warning" size="small">当前版本: {{ version.current_version }}</n-tag>
               <n-tag type="success" size="small">新版本: {{ version.version }}</n-tag>
             </div>
-            <div class="update-progress" v-if="content !=0">
-              <n-progress :percentage="percent" :stroke-width="12" />
-            </div>
           </div>
         </div>
-        
+        <div class="update-action">
+
+          <div class="update-progress">
+            <n-progress type="circle" :percentage="percent" :stroke-width="12" :color="{ stops: ['white', '#18a058'] }" >
+              <div class="indicator">
+                <button class="update-button" @click="emitter.emit('install_update')">
+                  {{ content == 0 ? '下载' : percent == 100 ? '安装' :'下载中...'}}
+                </button>
+              </div>
+            </n-progress>
+          </div>
+        </div>
         <div class="update-content">
           <div class="update-notes">
             <h3>更新内容</h3>
@@ -53,7 +63,7 @@ const percent = computed(()=>{return Math.floor(props.downloaded/props.content)*
 
 <style scoped lang="less">
 .update-dialog {
-    padding: 16px;
+    padding: 10px;
     max-width: 500px;
     
     .update-header {
@@ -64,13 +74,37 @@ const percent = computed(()=>{return Math.floor(props.downloaded/props.content)*
         font-size: 20px;
         font-weight: 600;
       }
-      
-      .version-tags {
-        display: flex;
-        gap: 8px;
+    }
+    .update-action{
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      .indicator{
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        &:hover {
+          transform: scale(1.05);
+        }
+        .update-button{
+          background-color: #fff;
+          width: 100%;
+          height: 100%;
+          margin: 0 auto;
+          border-radius: 50%;
+          cursor: pointer;
+          font-weight: 500;
+          font-size: 16px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          &.hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          }
+        }
       }
     }
-    
     .update-content {
       margin-bottom: 24px;
       

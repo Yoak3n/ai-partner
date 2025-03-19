@@ -82,7 +82,7 @@ pub async fn install_update(
             },
         )
         .await?;
-    pending_update.install(buf)?;
+    // pending_update.install(buf)?;
 
     Ok(())
 }
