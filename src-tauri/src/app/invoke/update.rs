@@ -37,13 +37,13 @@ pub async fn fetch_update(
         .as_ref()
         .map(|update| 
             UpdateMetadata {
-            version: update.version.clone(),
-            current_version: update.current_version.clone(),
-            note: update.body
-                .as_ref()
-                .map(|note| note.clone())
-                .unwrap_or_default(),
-        });
+                version: update.version.clone(),
+                current_version: update.current_version.clone(),
+                note: update.body
+                    .as_ref()
+                    .map(|note| note.clone())
+                    .unwrap_or_default(),
+            });
     let pending_update = state.pending_update.lock().unwrap();
     *pending_update.0.lock().unwrap() = update;
 
@@ -82,7 +82,7 @@ pub async fn install_update(
             },
         )
         .await?;
-    // pending_update.install(buf)?;
+    pending_update.install(buf)?;
 
     Ok(())
 }

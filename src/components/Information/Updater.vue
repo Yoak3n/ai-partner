@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
+import { computed, ref, type PropType } from 'vue';
 import {NTag,NProgress} from 'naive-ui'
 import { VersionComparation } from '../composables';
 import emitter from '../../bus';
+const downloading = ref(false);
 const props = defineProps({
   version: {
     type: Object as PropType<VersionComparation>,
@@ -39,8 +40,8 @@ const percent = computed(()=>{
           <div class="update-progress">
             <n-progress type="circle" :percentage="percent" :stroke-width="12" :color="{ stops: ['white', '#18a058'] }" >
               <div class="indicator">
-                <button class="update-button" @click="emitter.emit('install_update')">
-                  {{ content == 0 ? '下载' : percent == 100 ? '安装' :'下载中...'}}
+                <button class="update-button" @click="()=>{downloading = true;emitter.emit('install_update')}">
+                  {{ !downloading ? '下载' : percent == 100 ? '安装' :'下载中...'}}
                 </button>
               </div>
             </n-progress>
