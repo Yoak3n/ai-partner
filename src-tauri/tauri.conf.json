@@ -20,18 +20,6 @@
         "minWidth": 600,
         "minHeight": 600,
         "height": 720
-      },{
-        "title":"",
-        "center":true,
-        "decorations":false,
-        "width": 800,
-        "url":"/dialog",
-        "height": 100,
-        "resizable":false,
-        "transparent":true,
-        "label":"dialog",
-        "shadow": false,
-        "visible":false
       }
     ],
     "security": {

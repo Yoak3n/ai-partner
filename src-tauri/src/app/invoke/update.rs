@@ -3,6 +3,7 @@ use super::super::updater::{DownloadEvent, Result, UpdateMetadata, UpdaterError}
 use tauri::{ipc::Channel, AppHandle, Manager, State};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::UpdaterExt;
+use tauri_plugin_window_state::{AppHandleExt,StateFlags};
 #[tauri::command]
 pub async fn fetch_update(
     app: AppHandle,
@@ -12,13 +13,16 @@ pub async fn fetch_update(
     // let url = Url::parse(&format!(
     //     "https://cdn.myupdater.com/{{{{target}}}}-{{{{arch}}}}/{{{{current_version}}}}?channel={channel}",
     // )).expect("invalid URL");
-
+    let handle = app.app_handle().clone();
     let update = app
         .updater_builder()
         .timeout(std::time::Duration::from_secs(30))
         // 目前这样挺好的。默认使用的版本号比较器与当前的版本号命名规则不适配，patch字段单独比较大小会导致版本号比较错误，如0.1.7 低于 0.1.61导致不能更新到0.1.7
         .version_comparator(|c, r| c != r.version)
         //   .endpoints(vec![url])?
+        .on_before_exit(move||{
+            handle.save_window_state(StateFlags::POSITION).unwrap();
+        })
         .build()?
         .check()
         .await?;

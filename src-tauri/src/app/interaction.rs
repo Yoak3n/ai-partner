@@ -5,7 +5,7 @@ use tauri::{
 };
 use tauri::{App, Emitter, Error};
 use tauri_plugin_global_shortcut::{Builder, Code, Modifiers, ShortcutState};
-
+use super::window::switch_main_window;
 #[allow(dead_code)]
 pub fn register_shortcuts(app: &App) -> Result<(), Error> {
     let handle = app.handle();
@@ -61,6 +61,8 @@ pub fn create_systray(app: &mut App) -> Result<(), Error> {
                                             let _ = hide_i_clone.set_text("显示");
                                         }
                                     }
+                                }else{
+                                    let _ = hide_i_clone.set_text("显示");
                                 }
                             }
                             _ => {}
@@ -69,17 +71,20 @@ pub fn create_systray(app: &mut App) -> Result<(), Error> {
                 }
                 tauri::tray::TrayIconEvent::DoubleClick { button, .. } => {
                     if button == MouseButton::Left {
-                        if let Some(main_window) = app_handle.get_webview_window("main") {
-                            // 获取窗口状态
-                            if let Ok(is_visible) = main_window.is_visible() {
-                                if is_visible {
-                                    let _ = main_window.hide();
-                                } else {
-                                    let _ = main_window.show();
-                                    let _ = main_window.set_focus();
-                                }
-                            }
-                        }
+                        switch_main_window().unwrap();
+                        // if let Some(main_window) = app_handle.get_webview_window("main") {
+                        //     // 获取窗口状态
+                        //     if let Ok(is_visible) = main_window.is_visible() {
+                        //         if is_visible {
+                        //             let _ = main_window.hide();
+                        //         } else {
+                        //             let _ = main_window.show();
+                        //             let _ = main_window.set_focus();
+                        //         }
+                        //     }
+                        // }else{
+                            
+                        // }
                     }
                 }
                 _ => {}
@@ -88,13 +93,14 @@ pub fn create_systray(app: &mut App) -> Result<(), Error> {
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "quit" => app.exit(0),
             "hide" => {
-                if let Some(main_window) = app.get_webview_window("main") {
-                    if main_window.is_visible().unwrap() {
-                        main_window.hide().unwrap();
-                    } else {
-                        main_window.show().unwrap();
-                    }
-                }
+                switch_main_window().unwrap();
+                // if let Some(main_window) = app.get_webview_window("main") {
+                //     if main_window.is_visible().unwrap() {
+                //         main_window.hide().unwrap();
+                //     } else {
+                //         main_window.show().unwrap();
+                //     }
+                // }
             }
             _ => {
                 println!("menu item {:?} not handled", event.id);
@@ -103,3 +109,5 @@ pub fn create_systray(app: &mut App) -> Result<(), Error> {
         .build(app)?;
     Ok(())
 }
+
+

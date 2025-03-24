@@ -1,9 +1,16 @@
 <script lang="ts" setup>
-import { computed, toRefs,ref } from 'vue'
+import { computed, toRefs,ref, onMounted } from 'vue'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import {CloseSharp,RemoveSharp,ExpandSharp,ChevronDownSharp} from '@vicons/ionicons5'
 import { exit } from '@tauri-apps/plugin-process';
 
 import { useAppStore,type CloseAction } from '../store';
+
+
+onMounted(async () => {
+    let w = getCurrentWindow()
+    isFullscreen.value = await w.isFullscreen()
+})
 
 const heightString  = computed(() => `${heigth.value}px`)
 const props = defineProps({
@@ -16,15 +23,17 @@ const {heigth} = toRefs(props)
 const appStore = useAppStore()
 const showCloseDialog = ref(false)
 const rememberChoice = ref(false)
-
+const isFullscreen = ref(false)
 const minimize = () => {
     let w = getCurrentWindow()
     w.minimize()
 }
-const toggleFullscreen = async() => {
+const toggleFullscreen = async() => {``
     let w = getCurrentWindow()
-    const isFullscreen = await w.isFullscreen()
-    w.setFullscreen(!isFullscreen)
+    const state = await w.isFullscreen()
+    w.setFullscreen(!state)
+    isFullscreen.value = !state
+
 }
 const hideToTray = () => {
     let w = getCurrentWindow()
@@ -59,17 +68,15 @@ const cancelClose = () => {
 <template>
     <div class="header" data-tauri-drag-region>
         <div class="title">
-            <!-- <img src="../../src-tauri/icons/icon.png" alt="tauri" width="20" height="20"> -->
+            <img src="../../src-tauri/icons/icon.png" alt="tauri" width="20" height="20">
         </div>
         <div class="option">
-            <button @click="minimize">
-                <img src="https://api.iconify.design/mdi:window-minimize.svg" alt="minimize" />
+            <button @click="minimize"><RemoveSharp/></button>
+            <button @click="toggleFullscreen">
+                <ExpandSharp v-if="!isFullscreen" />
+                <ChevronDownSharp v-else/>
             </button>
-            <button @click="toggleFullscreen"> 
-                <img src="https://api.iconify.design/mdi:window-maximize.svg" alt="maximize" /></button>
-            <button @click="close">
-                <img src="https://api.iconify.design/mdi:close.svg" alt="close" />
-            </button>
+            <button @click="close"><CloseSharp /></button>
         </div>
     </div>
     <div v-if="showCloseDialog" class="close-dialog-overlay">

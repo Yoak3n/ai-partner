@@ -9,7 +9,7 @@ use once_cell::sync::OnceCell;
 use std::sync::{Arc, Mutex};
 use tauri::{generate_handler, AppHandle};
 use tauri_plugin_notification::NotificationExt;
-use tauri_plugin_window_state;
+// use tauri_plugin_window_state;
 use updater::PendingUpdate;
 
 use super::store::{db::Database, setting::Configuration};
