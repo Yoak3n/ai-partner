@@ -102,7 +102,6 @@ defineProps(
   margin-bottom: 100px;
   position: relative;
 
-  scrollbar-width: thin;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #ddd3f9 transparent;

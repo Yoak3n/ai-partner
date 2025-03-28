@@ -1,13 +1,16 @@
 <template>
     <div class="home-wrapper">
         <n-config-provider style="height: 100%;" :theme-overrides="themeOverrides">
-            <n-layout has-sider>
+            <n-layout has-sider style="height: 100%;">
                 <n-layout-sider
                     content-style="display: flex; flex-direction: column; justify-content: space-between;overflow: hidden;"
                     show-trigger :width="180" collapse-mode="width" bordered :collapsed-width="72"
                     :collapsed="collapsed" @collapse="collapsed = true" @expand="collapsed = false">
-                    <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="72"
+                    <div class="menu-item" style="overflow: auto; scrollbar-width: none;" >
+                        <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="72"
                         :collapsed-icon-size="22" :options="menuOptions" />
+                    </div>
+
                     <div class="option-btn" style="display: flex;flex-direction: column;">
                         <n-button text @click="()=>{activeKey = '';router.push('/favorite')}"
                             style="font-size: 48px;margin-bottom:2rem" size="large" class="setting">
