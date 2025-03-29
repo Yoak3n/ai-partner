@@ -4,7 +4,8 @@
             <n-layout has-sider style="height: 100%;">
                 <n-layout-sider
                     content-style="display: flex; flex-direction: column; justify-content: space-between;overflow: hidden;"
-                    show-trigger :width="180" collapse-mode="width" bordered :collapsed-width="72"
+                    show-trigger="bar" trigger-class="aside-trigger" collapsed-trigger-class="aside-trigger"
+                    :width="180" collapse-mode="width" bordered :collapsed-width="72"
                     :collapsed="collapsed" @collapse="collapsed = true" @expand="collapsed = false">
                     <div class="menu-item" style="overflow: auto; scrollbar-width: none;" >
                         <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="72"
@@ -186,6 +187,10 @@ const menuOptions = computed<MenuOption[]>(() => [
         .n-layout {
             height: 100%;
         }
+    }
+    .aside-trigger{
+        --n-toggle-bar-color: #DBE9F9 !important;
+        --n-toggle-bar-color-hover: #DBE9F9!important;
     }
 }
 </style>

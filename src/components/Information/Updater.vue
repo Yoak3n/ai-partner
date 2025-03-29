@@ -2,6 +2,7 @@
 import { computed, ref, type PropType } from 'vue';
 import {NTag,NProgress} from 'naive-ui'
 import { VersionComparation } from '../composables';
+import MarkdownRender from '../Markdown/index.vue';
 import emitter from '../../bus';
 const downloading = ref(false);
 const props = defineProps({
@@ -51,7 +52,7 @@ const percent = computed(()=>{
           <div class="update-notes">
             <h3>更新内容</h3>
             <div class="notes-content" v-if="version.note">
-              <div v-html="version.note.replace(/\n/g, '<br>')"></div>
+              <markdown-render :source="version.note"/>
             </div>
             <div class="notes-content empty" v-else>
               暂无更新说明
