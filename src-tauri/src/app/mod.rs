@@ -7,7 +7,7 @@ mod window;
 
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, Mutex};
-use tauri::{generate_handler, AppHandle};
+use tauri::{generate_handler, AppHandle, Manager};
 use tauri_plugin_notification::NotificationExt;
 // use tauri_plugin_window_state;
 use updater::PendingUpdate;
@@ -85,9 +85,9 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 let app_handle = app.handle().clone();
+                APP.get_or_init(|| app.app_handle().clone());
                 interaction::create_systray(app)?;
                 app_handle.plugin(tauri_plugin_updater::Builder::new().build())?;
-                APP.get_or_init(|| app.handle().clone());
 
                 match register_shortcut("all") {
                     Ok(_) => {}
@@ -118,6 +118,12 @@ pub fn run() {
     let app = instance.build(tauri::generate_context!()).unwrap();
     app
         .run(|_,e|match e{
+
+            tauri::RunEvent::ExitRequested { api, code,.. } => {
+                if code.is_none(){
+                    api.prevent_exit();
+                }
+            }
             tauri::RunEvent::WindowEvent { label, event, .. }=>{
                 if label == "main"{
                     match event{
