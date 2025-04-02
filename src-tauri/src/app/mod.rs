@@ -106,10 +106,10 @@ pub fn run() {
                 utils::timer::Timer::global()
                     .init()
                     .unwrap_or_else(|e| println!("Failed to init timer: {}", e));
-                window::enable_auto_light_weight_mode();
 
                 tauri::async_runtime::block_on(async move {
                     let _ = window::switch_main_window();
+                    window::enable_auto_light_weight_mode();
                 });
             }
             Ok(())
@@ -117,5 +117,18 @@ pub fn run() {
 
     let app = instance.build(tauri::generate_context!()).unwrap();
     app
-        .run(|_,_|{});
+        .run(|_,e|match e{
+            tauri::RunEvent::WindowEvent { label, event, .. }=>{
+                if label == "main"{
+                    match event{
+                        tauri::WindowEvent::CloseRequested { api, .. } => {
+                            api.prevent_close();
+                            let _ = window::switch_main_window();
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ =>{}
+        });
 }
