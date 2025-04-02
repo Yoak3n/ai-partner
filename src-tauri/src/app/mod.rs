@@ -12,6 +12,8 @@ use tauri_plugin_notification::NotificationExt;
 // use tauri_plugin_window_state;
 use updater::PendingUpdate;
 
+use crate::utils;
+
 use super::store::{db::Database, setting::Configuration};
 use hotkey::register_shortcut;
 use state::AppState;
@@ -78,9 +80,7 @@ pub fn run() {
             invoke::tag::get_messages_by_tag,
             invoke::tag::remove_tag_from_message,
             invoke::tag::get_favorited_messages_with_tags
-        ]);
-
-    instance
+        ])
         .setup(|app| {
             #[cfg(desktop)]
             {
@@ -103,9 +103,19 @@ pub fn run() {
                             );
                     }
                 }
+                utils::timer::Timer::global()
+                    .init()
+                    .unwrap_or_else(|e| println!("Failed to init timer: {}", e));
+                window::enable_auto_light_weight_mode();
+
+                tauri::async_runtime::block_on(async move {
+                    let _ = window::switch_main_window();
+                });
             }
             Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        });
+
+    let app = instance.build(tauri::generate_context!()).unwrap();
+    app
+        .run(|_,_|{});
 }

@@ -1,5 +1,11 @@
+use delay_timer::prelude::TaskBuilder;
+use tauri::{Error, Listener,Manager, WebviewUrl, WebviewWindowBuilder};
+use anyhow::Result;
 use super::APP;
-use tauri::{Error, Manager, WebviewUrl, WebviewWindowBuilder};
+use crate::utils::timer::Timer;
+
+const LIGHT_WEIGHT_TASK_UID: &str = "light_weight_task";
+
 pub fn switch_dialog_window() -> Result<(), Error> {
     let app = APP.get().unwrap();
     // let app_handle = app.clone();
@@ -46,6 +52,7 @@ pub fn switch_main_window() -> Result<(), Error> {
             }
         }
         None => {
+            println!("create main window");
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("/".into()))
                 .title("ai-partner")
                 .resizable(true)
@@ -56,5 +63,94 @@ pub fn switch_main_window() -> Result<(), Error> {
                 .build()?;
         }
     }
+    Ok(())
+}
+
+pub fn entry_lightweight_mode() {
+    if let Some(window) = APP.get().unwrap().app_handle().get_webview_window("main") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.hide();
+        }
+        if let Some(webview) = window.get_webview_window("main") {
+            let _ = webview.destroy();
+        }
+        #[cfg(target_os = "macos")]
+        AppHandleManager::global().set_activation_policy_accessory();
+    }
+    let _ = cancel_light_weight_timer();
+}
+
+pub fn enable_auto_light_weight_mode() {
+    println!("enable auto light weight mode");
+    setup_window_close_listener();
+    setup_webview_focus_listener();
+}
+
+fn setup_window_close_listener() -> u32 {
+    if let Some(window) = APP.get().unwrap().app_handle().get_webview_window("main") {
+        let handler = window.listen("tauri://close-requested", move |_event| {
+            println!("close requested");
+            let _ = setup_light_weight_timer();
+        });
+        return handler;
+    }
+    0
+}
+
+fn setup_webview_focus_listener() -> u32 {
+    if let Some(window) = APP.get().unwrap().app_handle().get_webview_window("main")  {
+        let handler = window.listen("tauri://focus", move |_event| {
+            let _ = cancel_light_weight_timer();
+
+        });
+        return handler;
+    }
+    0
+}
+
+fn setup_light_weight_timer() -> Result<()> {
+    Timer::global().init()?;
+
+    let mut timer_map = Timer::global().timer_map.write().unwrap();
+    let delay_timer = Timer::global().delay_timer.write();
+    let mut timer_count = Timer::global().timer_count.lock().unwrap();
+
+    let task_id = *timer_count;
+    *timer_count += 1;
+
+
+    let task = TaskBuilder::default()
+        .set_task_id(task_id)
+        .set_maximum_parallel_runnable_num(1)
+        .set_frequency_once_by_minutes(10)
+        .spawn_async_routine(move || async move {
+            entry_lightweight_mode();
+        })?;
+
+    delay_timer
+        .unwrap()
+        .add_task(task)?;
+
+    let timer_task = crate::utils::timer::TimerTask {
+        task_id,
+        interval_minutes: 10,
+        last_run: chrono::Local::now().timestamp(),
+    };
+
+    timer_map.insert(LIGHT_WEIGHT_TASK_UID.to_string(), timer_task);
+
+    Ok(())
+}
+
+
+fn cancel_light_weight_timer() -> Result<()> {
+    let mut timer_map = Timer::global().timer_map.write().unwrap();
+    let delay_timer = Timer::global().delay_timer.write().unwrap();
+
+    if let Some(task) = timer_map.remove(LIGHT_WEIGHT_TASK_UID) {
+        delay_timer
+            .remove_task(task.task_id)?;
+    }
+
     Ok(())
 }

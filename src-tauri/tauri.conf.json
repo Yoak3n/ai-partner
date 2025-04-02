@@ -10,18 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "ai-partner",
-        "resizable": true,
-        "center": true,
-        "decorations": false,
-        "width": 1024,
-        "minWidth": 600,
-        "minHeight": 600,
-        "height": 720
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }

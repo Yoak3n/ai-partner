@@ -38,7 +38,7 @@ const toggleFullscreen = async() => {``
 const hideToTray = () => {
     let w = getCurrentWindow()
     showCloseDialog.value = false
-    w.hide()
+    w.close()
 }
 const handleCloseAction = (action: CloseAction) => {
     if (rememberChoice.value) {

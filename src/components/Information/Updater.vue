@@ -51,7 +51,7 @@ const percent = computed(()=>{
         <div class="update-content">
           <div class="update-notes">
             <h3>更新内容</h3>
-            <div class="notes-content" v-if="version.note">
+            <div class="notes-content" v-if="version.note && version.note != ''">
               <markdown-render :source="version.note"/>
             </div>
             <div class="notes-content empty" v-else>
