@@ -74,10 +74,7 @@ pub fn entry_lightweight_mode() {
         if let Some(webview) = window.get_webview_window("main") {
             println!("entry light weight mode");
             let _ = webview.destroy();
-            // TODO: 会导致程序退出
         }
-        #[cfg(target_os = "macos")]
-        AppHandleManager::global().set_activation_policy_accessory();
     }
     let _ = cancel_light_weight_timer();
 }
@@ -91,8 +88,8 @@ pub fn enable_auto_light_weight_mode() {
 fn setup_window_close_listener() -> u32 {
     if let Some(window) = APP.get().unwrap().get_webview_window("main") {
         let handler = window.listen("tauri://close-requested", move |_event| {
-            println!("close requested");
             let _ = setup_light_weight_timer();
+            println!("close main window");
         });
         return handler;
     }
@@ -101,6 +98,14 @@ fn setup_window_close_listener() -> u32 {
 
 fn setup_webview_focus_listener() -> u32 {
     if let Some(window) = APP.get().unwrap().app_handle().get_webview_window("main")  {
+        let handler = window.listen("tauri://focus", move |_event| {
+            println!("focus");
+            let _ = cancel_light_weight_timer();
+
+        });
+        return handler;
+    }
+    if let Some(window) = APP.get().unwrap().app_handle().get_webview_window("dialog")  {
         let handler = window.listen("tauri://focus", move |_event| {
             println!("focus");
             let _ = cancel_light_weight_timer();
@@ -125,7 +130,7 @@ fn setup_light_weight_timer() -> Result<()> {
     let task = TaskBuilder::default()
         .set_task_id(task_id)
         .set_maximum_parallel_runnable_num(1)
-        .set_frequency_once_by_minutes(1)
+        .set_frequency_once_by_minutes(5)
         .spawn_async_routine(move || async move {
             entry_lightweight_mode();
         })?;
@@ -136,7 +141,7 @@ fn setup_light_weight_timer() -> Result<()> {
 
     let timer_task = crate::utils::timer::TimerTask {
         task_id,
-        interval_minutes: 1,
+        interval_minutes: 5,
         last_run: chrono::Local::now().timestamp(),
     };
 

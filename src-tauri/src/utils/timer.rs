@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use anyhow::Result;
 use std::sync::{
     Arc,
-    atomic::{AtomicBool,Ordering},
     Mutex,RwLock
 };
 use once_cell::sync::OnceCell;
-use delay_timer::prelude::{DelayTimer, DelayTimerBuilder, TaskBuilder};
+use delay_timer::prelude::{DelayTimer, DelayTimerBuilder};
 type TaskID = u64;
 
 #[derive(Debug, Clone)]
@@ -75,8 +74,8 @@ impl Timer {
         Ok(())
     }
     pub fn refresh(&self) -> Result<()> {
-        let timer_map = self.timer_map.write();
-        let delay_timer = self.delay_timer.write();
+        // let timer_map = self.timer_map.write();
+        // let delay_timer = self.delay_timer.write();
 
         Ok(())
     }

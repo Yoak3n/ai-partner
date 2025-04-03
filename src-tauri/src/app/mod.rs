@@ -125,7 +125,7 @@ pub fn run() {
                 }
             }
             tauri::RunEvent::WindowEvent { label, event, .. }=>{
-                if label == "main"{
+                if label == "main" || label == "dialog"{
                     match event{
                         tauri::WindowEvent::CloseRequested { api, .. } => {
                             api.prevent_close();
