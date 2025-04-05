@@ -13,7 +13,7 @@ pub fn switch_dialog_window() -> Result<(), Error> {
         Some(w) => {
             if w.is_visible()? {
                 w.set_always_on_top(false)?;
-                w.hide()?;
+                w.close()?;
             } else {
                 w.set_focus()?;
                 w.set_always_on_top(true)?;
