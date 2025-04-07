@@ -56,7 +56,7 @@ jobs:
         with:
           tagName: __VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'v__VERSION__'
-          releaseBody: '优化侧边栏显示'
+          releaseBody: 'a `beta version` for light weight mode\n when close all windows after 5min of inactivity, the app will keep only the tray icon.'
           releaseDraft: false
           prerelease: false
           updaterJsonPreferNsis: true

@@ -83,13 +83,29 @@ pub fn enable_auto_light_weight_mode() {
     println!("enable auto light weight mode");
     setup_window_close_listener();
     setup_webview_focus_listener();
+    setup_dialog_window_close_listener();
+}
+
+fn setup_dialog_window_close_listener() -> u32 {
+    if let Some(window) = APP.get().unwrap().get_webview_window("dialog") {
+        let handler = window.listen("tauri://close-requested", move |_event| {
+            if let Some(main_window) = APP.get().unwrap().get_webview_window("main") {
+                if !main_window.is_visible().unwrap_or(true) {
+                    let _ = setup_light_weight_timer();
+                }
+            }else{            
+                let _ = setup_light_weight_timer();
+            }
+        });
+        return handler;
+    }
+    0
 }
 
 fn setup_window_close_listener() -> u32 {
     if let Some(window) = APP.get().unwrap().get_webview_window("main") {
         let handler = window.listen("tauri://close-requested", move |_event| {
             let _ = setup_light_weight_timer();
-            println!("close main window");
         });
         return handler;
     }
