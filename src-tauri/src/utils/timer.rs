@@ -67,10 +67,11 @@ impl Timer {
             return Err(e);
         }
 
-        let cur_timestamp = chrono::Local::now().timestamp();
+        // let cur_timestamp = chrono::Local::now().timestamp();
 
         // Advance tasks outside of locks to minimize lock contention
-        println!("init timer{}", cur_timestamp);
+ 
+        println!("init timer {}", chrono::Local::now().to_rfc3339());
         Ok(())
     }
     pub fn refresh(&self) -> Result<()> {
