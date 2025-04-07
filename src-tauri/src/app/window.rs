@@ -1,5 +1,5 @@
 use delay_timer::prelude::TaskBuilder;
-use tauri::{Error, Listener,Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Emitter, Error, Listener, Manager, WebviewUrl, WebviewWindowBuilder};
 use anyhow::Result;
 use super::APP;
 use crate::utils::timer::Timer;
@@ -9,11 +9,15 @@ const LIGHT_WEIGHT_TASK_UID: &str = "light_weight_task";
 pub fn switch_dialog_window() -> Result<(), Error> {
     let app = APP.get().unwrap();
     // let app_handle = app.clone();
+    println!("switch dialog window");
     match app.get_webview_window("dialog") {
         Some(w) => {
             if w.is_visible()? {
+                w.emit("dialog-close-requested", ())?;
                 w.set_always_on_top(false)?;
-                w.close()?;
+                w.hide()?;
+
+                // w.close()?;
             } else {
                 w.set_focus()?;
                 w.set_always_on_top(true)?;
@@ -23,7 +27,6 @@ pub fn switch_dialog_window() -> Result<(), Error> {
         None => {
             // 手动创建窗口会导致程序无响应，需要改用自动创建，这段代码暂时保留，以后再研究
             // 问题出在缓存窗口状态的插件，修改后会导致之前的窗口状态丢失从而导致无响应
-            println!("create dialog window");
             WebviewWindowBuilder::new(app, "dialog", WebviewUrl::App("/dialog".into()))
                 .transparent(true)
                 .title("")
@@ -33,6 +36,7 @@ pub fn switch_dialog_window() -> Result<(), Error> {
                 .inner_size(800.0, 100.0)
                 .center()
                 .build()?;
+            setup_dialog_window_close_listener();
         }
     }
     Ok(())
@@ -52,7 +56,6 @@ pub fn switch_main_window() -> Result<(), Error> {
             }
         }
         None => {
-            println!("create main window");
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("/".into()))
                 .title("ai-partner")
                 .resizable(true)
@@ -61,7 +64,9 @@ pub fn switch_main_window() -> Result<(), Error> {
                 .min_inner_size(600.0, 600.0)
                 .center()
                 .build()?;
+
         }
+        
     }
     Ok(())
 }
@@ -71,10 +76,14 @@ pub fn entry_lightweight_mode() {
         if window.is_visible().unwrap_or(false) {
             let _ = window.hide();
         }
-        if let Some(webview) = window.get_webview_window("main") {
-            println!("entry light weight mode");
+        let _ = window.destroy();
+        if let Some(webview) = window.get_webview_window("dialog") {
+            if window.is_visible().unwrap_or(false) {
+                let _ = webview.hide();
+            }
             let _ = webview.destroy();
         }
+
     }
     let _ = cancel_light_weight_timer();
 }
@@ -83,14 +92,15 @@ pub fn enable_auto_light_weight_mode() {
     println!("enable auto light weight mode");
     setup_window_close_listener();
     setup_webview_focus_listener();
-    setup_dialog_window_close_listener();
 }
 
 fn setup_dialog_window_close_listener() -> u32 {
     if let Some(window) = APP.get().unwrap().get_webview_window("dialog") {
-        let handler = window.listen("tauri://close-requested", move |_event| {
+        println!("setup dialog window close listener");
+        let handler = window.listen("dialog-close-requested", move |_event| {
+            println!("dialog window close requested");
             if let Some(main_window) = APP.get().unwrap().get_webview_window("main") {
-                if !main_window.is_visible().unwrap_or(true) {
+                if !main_window.is_visible().unwrap_or(false) {
                     let _ = setup_light_weight_timer();
                 }
             }else{            

@@ -43,7 +43,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         // OS
         .invoke_handler(generate_handler![
@@ -125,7 +125,7 @@ pub fn run() {
                 }
             }
             tauri::RunEvent::WindowEvent { label, event, .. }=>{
-                if label == "main" || label == "dialog"{
+                if label == "main" {
                     match event{
                         tauri::WindowEvent::CloseRequested { api, .. } => {
                             api.prevent_close();
