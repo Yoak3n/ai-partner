@@ -72,19 +72,6 @@ pub fn create_systray(app: &mut App) -> Result<(), Error> {
                 tauri::tray::TrayIconEvent::DoubleClick { button, .. } => {
                     if button == MouseButton::Left {
                         switch_main_window().unwrap();
-                        // if let Some(main_window) = app_handle.get_webview_window("main") {
-                        //     // 获取窗口状态
-                        //     if let Ok(is_visible) = main_window.is_visible() {
-                        //         if is_visible {
-                        //             let _ = main_window.hide();
-                        //         } else {
-                        //             let _ = main_window.show();
-                        //             let _ = main_window.set_focus();
-                        //         }
-                        //     }
-                        // }else{
-                            
-                        // }
                     }
                 }
                 _ => {}

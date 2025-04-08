@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type PropType } from 'vue';
+import { computed, ref,toRefs, type PropType } from 'vue';
 import {NTag,NProgress} from 'naive-ui'
 import { VersionComparation } from '../composables';
 import MarkdownRender from '../Markdown/index.vue';
@@ -19,8 +19,9 @@ const props = defineProps({
     default:0
   }
 });
+const {content,downloaded} = toRefs(props)
 const percent = computed(()=>{
-  return props.content == 0 ? 0: Math.floor(props.downloaded/props.content)*100
+  return content.value == 0 ? 0: Math.floor(downloaded.value/content.value)*100
 })
 
 </script>
