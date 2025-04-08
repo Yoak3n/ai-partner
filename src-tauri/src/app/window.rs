@@ -60,7 +60,7 @@ pub fn switch_main_window() -> Result<(), Error> {
                 .title("ai-partner")
                 .resizable(true)
                 .decorations(false)
-                .inner_size(1024.0, 720.0)
+                .inner_size(1024.0, 900.0)
                 .min_inner_size(600.0, 600.0)
                 .center()
                 .build()?;

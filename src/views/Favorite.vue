@@ -126,7 +126,11 @@ const loadFavoriteMessages = async() => {
 const viewDetail = (msg: FavoriteMessage) => {
   window.$modal.create({
     title: '消息详情',
-    content: () => h(FavoriteDetail, { message: msg }),
+    content: () => h(FavoriteDetail, { message: msg ,style:"max-height:80%"}),
+    contentStyle:{
+      maxHeight:'80%',
+      overflow:'auto'
+    },
     preset:'card',
     maskClosable: true,
   })
